@@ -593,11 +593,15 @@ Connector with one input signal of type Real.
         Inlet.Q = Q;
         Outlet.Q = -Q;
         dP = Outlet.P - Inlet.P;
-        Q = 0;
-//Q = if RPM == 10000 then min(306.65 - 4.03 * dP + 0.0127 * dP ^ 2, 133)
-//    else if RPM == 9000 then min(245.16 - 3.6 * dP + 0.0119 * dP ^ 2, 116.667)
-//    else if RPM == 8000 then min(195.85 - 3.506 * dP + 0.0136 * dP ^ 2, 100)
-//    else 0;
+        
+        Q = if RPM == 3000 then -0.12205 * dP ^ 2 + 3.0093 * dP + 29.886
+          else if RPM == 4000 then -0.048803 * dP ^ 2 + 1.8484 * dP + 57.770
+          else if RPM == 5000 then -0.024594 * dP ^ 2 + 1.29678 * dP + 84.081
+          else if RPM == 6000 then -0.012153 * dP ^ 2 + 0.81934 * dP + 107.02
+          else if RPM == 7000 then -0.013720 * dP ^ 2 + 2.1611 * dP + 51.474
+          else if RPM == 8000 then -0.0055313 * dP ^ 2 + 0.70504 * dP + 143.71
+          else /* if RPM == 9000 then */ -0.0042916 * dP ^ 2 + 0.80525 * dP + 141.18;
+        
         annotation(Diagram(coordinateSystem(extent = {{-148.5, -105.0}, {148.5, 105.0}}, preserveAspectRatio = true, initialScale = 0.1, grid = {10, 10})), Icon(coordinateSystem(extent = {{-100.0, -100.0}, {100.0, 100.0}}, preserveAspectRatio = true, initialScale = 0.1, grid = {10, 10}), graphics = {Rectangle(visible = true, fillColor = {255, 128, 0}, fillPattern = FillPattern.Solid, extent = {{-20.0, -70.0}, {20.0, 70.0}}), Text(visible = true, fillColor = {128, 0, 0}, fillPattern = FillPattern.Solid, extent = {{-16.8042, -10.5833}, {16.8042, 10.5833}}, textString = "VAD", fontName = "Arial"), Text(visible = true, origin = {30.0, 80.0}, fillPattern = FillPattern.Solid, extent = {{-10.0, -10.0}, {10.0, 10.0}}, textString = "I", fontName = "Arial"), Text(visible = true, origin = {30.0, -80.0}, fillPattern = FillPattern.Solid, extent = {{-10.0, -10.0}, {10.0, 10.0}}, textString = "O", fontName = "Arial")}));
       end VAD2;
       annotation(Icon(coordinateSystem(extent = {{-100, 100}, {100, -100}}, preserveAspectRatio = true, initialScale = 0.1, grid = {10, 10}), graphics = {Rectangle(visible = true, fillColor = {235, 235, 235}, fillPattern = FillPattern.Solid, extent = {{-100, -100}, {80, 50}}), Polygon(visible = true, fillColor = {210, 210, 210}, fillPattern = FillPattern.Solid, points = {{-100, 50}, {-80, 70}, {100, 70}, {80, 50}, {-100, 50}}), Polygon(visible = true, fillColor = {210, 210, 210}, fillPattern = FillPattern.Solid, points = {{100, 70}, {100, -80}, {80, -100}, {80, 50}, {100, 70}}), Text(visible = true, fillColor = {0, 0, 255}, extent = {{-85, -85}, {65, 35}}, textString = "Devices", fontName = "Arial"), Text(visible = true, fillColor = {255, 0, 0}, extent = {{-120, 73}, {120, 122}}, textString = "%name", fontName = "Arial")}), Diagram(coordinateSystem(extent = {{-100, 100}, {100, -100}}, preserveAspectRatio = true, initialScale = 0.1, grid = {10, 10})));
@@ -1970,7 +1974,7 @@ Connector with one input signal of type Real.
       model Ursino1998ModelVad2 "Reimplementation of the Ursino model with VAD2, i.e. the HQ curve is for Heart Mate III device"
         extends ModelParametersSHF10000;
         import Mathcard.Library.*;
-        Mathcard.Library.Devices.VAD LVAD(RPM = Param_LVAD_RPM) annotation(Placement(visible = true, transformation(origin = {80.0, -20.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
+        Mathcard.Library.Devices.VAD2 LVAD(RPM = Param_LVAD_RPM) annotation(Placement(visible = true, transformation(origin = {80.0, -20.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
         Mathcard.Library.Heart.AutoregulatingChambers.Atrium LeftAtrium(C = Param_LeftAtrium_C, V0 = Param_LeftAtrium_V0, Vu0 = Param_LeftAtrium_Vu0) annotation(Placement(visible = true, transformation(origin = {30.0, 30.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
         Mathcard.Library.Heart.Valves.Valve_AV MitralicValve(R = Param_MitralicValve_R) annotation(Placement(visible = true, transformation(origin = {30.0, 10.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
         Mathcard.Library.Heart.AutoregulatingChambers.Ventricle LeftVentricle(V0 = Param_LeftVentricle_V0, kR = Param_LeftVentricle_kR, Emax0 = Param_LeftVentricle_Emax0, EmaxRef0 = Param_LeftVentricle_EmaxRef0, AGain_Emax = Param_LeftVentricle_AGain_Emax, ADelay_Emax = Param_LeftVentricle_ADelay_Emax, ATau_Emax = Param_LeftVentricle_ATau_Emax, P0 = Param_LeftVentricle_P0, kE = Param_LeftVentricle_kE, TSys0 = Param_LeftVentricle_TSys0, kSys = Param_LeftVentricle_kSys, TRef0 = Param_LeftVentricle_TRef0, AGain_Ts = Param_LeftVentricle_AGain_Ts, ADelay_Ts = Param_LeftVentricle_ADelay_Ts, ATau_Ts = Param_LeftVentricle_ATau_Ts, AGain_Tv = Param_LeftVentricle_AGain_Tv, ADelay_Tv = Param_LeftVentricle_ADelay_Tv, ATau_Tv = Param_LeftVentricle_ATau_Tv) annotation(Placement(visible = true, transformation(origin = {30.0, -10.0}, extent = {{10.0, -10.0}, {-10.0, 10.0}}, rotation = 0)));
