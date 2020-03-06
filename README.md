@@ -3,11 +3,14 @@ Internship with Jean Bonnemain & Simone Deparis
 
 ## Steps
 
-1. Fit polynomials for HQ curves of HMIII, create a new ventricular assist device (VAD) module `VAD2` and a new model including `VAD2`
+1. Update the modelica code for Heart Mate III instead of Heart mate II. That is, fit polynomials for HQ curves of HMIII and modify the model:
+	* Duplicate the `VAD` model to `VAD2` and modify the expression of `Q` as a function of `dP`
+	* Duplicate the main model that instanciates the `VAD` model and instanciate `VAD2` instead
+	* Check the consistency of curves for medium heart failure (MHF) / severe heart failure (SHF) 
+	and in context of baroreceptor regulation / no regulation. 
+	Absence of regulation is simulated by setting the following parameters to zero: 
 
 ## Data
-
-
 
 #### Modelica
 
