@@ -1,0 +1,31 @@
+--- /media/matthias/Data/Programmation/git/VAD-0D-DNN/modelica/parameters/ModelParametersNH	Fri Mar  6 18:05:20 2020
++++ /media/matthias/Data/Programmation/git/VAD-0D-DNN/modelica/parameters/ModelParametersMHF8000	Fri Mar  6 09:38:46 2020
+@@ -1,17 +1,17 @@
+-model ModelParametersNH
++model ModelParametersMHF8000
+   parameter Real Param_LeftAtrium_C = 19.23;
+   parameter Real Param_LeftAtrium_V0(unit = "ml") = 25;
+   parameter Real Param_LeftAtrium_Vu0(unit = "ml") = 25;
+   parameter Real Param_MitralicValve_R(unit = "mmHg.s2/ml") = 2.5 * 0.001;
+   parameter Real Param_LeftVentricle_V0(unit = "ml") = 16.77;
+   parameter Real Param_LeftVentricle_kR(unit = "s/ml") = 3.75 * 0.0001;
+-  parameter Real Param_LeftVentricle_Emax0 = 2.95;
+-  parameter Real Param_LeftVentricle_EmaxRef0 = 2.392;
+-  parameter Real Param_LeftVentricle_AGain_Emax = 0.475;
++  parameter Real Param_LeftVentricle_Emax0 = 0.8;
++  parameter Real Param_LeftVentricle_EmaxRef0 = 0.8;
++  parameter Real Param_LeftVentricle_AGain_Emax = 0.2;
+   parameter Real Param_LeftVentricle_ADelay_Emax = 2;
+   parameter Real Param_LeftVentricle_ATau_Emax = 8;
+   parameter Real Param_LeftVentricle_P0(unit = "mmHg") = 1.5;
+-  parameter Real Param_LeftVentricle_kE(unit = "1/ml") = 0.014;
++  parameter Real Param_LeftVentricle_kE(unit = "1/ml") = 0.013;
+   parameter Real Param_LeftVentricle_TSys0(unit = "s") = 0.5;
+   parameter Real Param_LeftVentricle_kSys(unit = "s2") = 0.075;
+   parameter Real Param_LeftVentricle_TRef0 = 0.58;
+@@ -116,4 +116,4 @@
+   parameter Real Param_AutoregulationCenter_fcs0 = 25;
+   parameter Real Param_AutoregulationCenter_kev = 7.06;
+   parameter Real Param_LVAD_RPM(unit = "RPM") = 8000;
+-end ModelParametersNH;
++end ModelParametersMHF8000;

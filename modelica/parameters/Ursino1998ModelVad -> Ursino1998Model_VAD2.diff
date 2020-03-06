@@ -1,0 +1,76 @@
+--- /media/matthias/Data/Programmation/git/VAD-0D-DNN/modelica/parameters/Ursino1998ModelVad	Fri Mar  6 17:55:08 2020
++++ /media/matthias/Data/Programmation/git/VAD-0D-DNN/modelica/parameters/Ursino1998Model_VAD2	Fri Mar  6 17:56:30 2020
+@@ -1,41 +1,63 @@
+-model Ursino1998ModelVad
+-  extends ModelParametersNH;
+-  //extends HMIII.ModelParametersMHF;
++model Ursino1998Model_VAD2 "HMIII VAD model"
++  // EXTEND THE SUPERCLASS
++  // CHOOSE THE HEART FAILURE LEVEL (MHF / SHF)
++  extends HMIII.ModelParametersMHF;
++  // IMPORT MATHCARD LIBRARY
+   import Mathcard.Library.*;
+-  Mathcard.Library.Devices.VAD LVAD(RPM = Param_LVAD_RPM) annotation(
++  // ============================
++  //
++  // VAD DEVICE
++  Mathcard.Library.Devices.VAD2 LVAD(RPM = Param_LVAD_RPM) annotation(
+     Placement(visible = true, transformation(origin = {80.0, -20.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
++  // LEFT ATRIUM
+   Mathcard.Library.Heart.AutoregulatingChambers.Atrium LeftAtrium(C = Param_LeftAtrium_C, V0 = Param_LeftAtrium_V0, Vu0 = Param_LeftAtrium_Vu0) annotation(
+     Placement(visible = true, transformation(origin = {30.0, 30.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
++  // MITRALIC VALVE
+   Mathcard.Library.Heart.Valves.Valve_AV MitralicValve(R = Param_MitralicValve_R) annotation(
+     Placement(visible = true, transformation(origin = {30.0, 10.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
++  // LEFT VENTRICLE
+   Mathcard.Library.Heart.AutoregulatingChambers.Ventricle LeftVentricle(V0 = Param_LeftVentricle_V0, kR = Param_LeftVentricle_kR, Emax0 = Param_LeftVentricle_Emax0, EmaxRef0 = Param_LeftVentricle_EmaxRef0, AGain_Emax = Param_LeftVentricle_AGain_Emax, ADelay_Emax = Param_LeftVentricle_ADelay_Emax, ATau_Emax = Param_LeftVentricle_ATau_Emax, P0 = Param_LeftVentricle_P0, kE = Param_LeftVentricle_kE, TSys0 = Param_LeftVentricle_TSys0, kSys = Param_LeftVentricle_kSys, TRef0 = Param_LeftVentricle_TRef0, AGain_Ts = Param_LeftVentricle_AGain_Ts, ADelay_Ts = Param_LeftVentricle_ADelay_Ts, ATau_Ts = Param_LeftVentricle_ATau_Ts, AGain_Tv = Param_LeftVentricle_AGain_Tv, ADelay_Tv = Param_LeftVentricle_ADelay_Tv, ATau_Tv = Param_LeftVentricle_ATau_Tv) annotation(
+     Placement(visible = true, transformation(origin = {30.0, -10.0}, extent = {{10.0, -10.0}, {-10.0, 10.0}}, rotation = 0)));
++  // AORTIC VALVE
+   Mathcard.Library.Heart.Valves.Valve_VC AorticValve(kR = Param_AorticValve_kR) annotation(
+     Placement(visible = true, transformation(origin = {30.0, -30.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
++  // SYSTEMIC ARTERIES
+   Mathcard.Library.Vessels.I1O1.Linear.CRL_LP SystemicArteries(R = Param_SystemicArteries_R, I = Param_SystemicArteries_I, C = Param_SystemicArteries_C, V0 = Param_SystemicArteries_V0, Vu0 = Param_SystemicArteries_Vu0) annotation(
+     Placement(visible = true, transformation(origin = {70.0, -80.0}, extent = {{10.0, -10.0}, {-10.0, 10.0}}, rotation = 0)));
++  // SPLANCHNIC PERIPHERAL CIRCULATION
+   Mathcard.Library.Vessels.I1O1.Autoregulating.CRL_LP_AR SplanchnicPeripheralCirculation(R0 = Param_SplanchnicPeripheralCirculation_R0, RRef0 = Param_SplanchnicPeripheralCirculation_RRef0, AGain = Param_SplanchnicPeripheralCirculation_AGain, ADelay = Param_SplanchnicPeripheralCirculation_ADelay, ATau = Param_SplanchnicPeripheralCirculation_ATau, I = Param_SplanchnicPeripheralCirculation_I, C = Param_SplanchnicPeripheralCirculation_C, V0 = Param_SplanchnicPeripheralCirculation_V0, Vu0 = Param_SplanchnicPeripheralCirculation_Vu0) annotation(
+     Placement(visible = true, transformation(origin = {0.0, -90.0}, extent = {{10.0, -10.0}, {-10.0, 10.0}}, rotation = 0)));
++  // EXTRASPLANCHNIC PERIPHERAL CIRCULATION
+   Mathcard.Library.Vessels.I1O1.Autoregulating.CRL_LP_AR ExtraSplanchnicPeripheralCirculation(R0 = Param_ExtraSplanchnicPeripheralCirculation_R0, RRef0 = Param_ExtraSplanchnicPeripheralCirculation_RRef0, AGain = Param_ExtraSplanchnicPeripheralCirculation_AGain, ADelay = Param_ExtraSplanchnicPeripheralCirculation_ADelay, ATau = Param_ExtraSplanchnicPeripheralCirculation_ATau, I = Param_ExtraSplanchnicPeripheralCirculation_I, C = Param_ExtraSplanchnicPeripheralCirculation_C, V0 = Param_ExtraSplanchnicPeripheralCirculation_V0, Vu0 = Param_ExtraSplanchnicPeripheralCirculation_Vu0) annotation(
+     Placement(visible = true, transformation(origin = {0.0, -70.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = -180)));
++  // SPLANCHNIC VEINS
+   Mathcard.Library.Vessels.I1O1.Autoregulating.CRL_LP_AVu SplanchnicVeins(R = Param_SplanchnicVeins_R, I = Param_SplanchnicVeins_I, C = Param_SplanchnicVeins_C, V0 = Param_SplanchnicVeins_V0, Vu0 = Param_SplanchnicVeins_Vu0, VuRef0 = Param_SplanchnicVeins_VuRef0, AGain = Param_SplanchnicVeins_AGain, ADelay = Param_SplanchnicVeins_ADelay, ATau = Param_SplanchnicVeins_ATau) annotation(
+     Placement(visible = true, transformation(origin = {-70.0, -90.0}, extent = {{10.0, -10.0}, {-10.0, 10.0}}, rotation = 0)));
++  // EXTRASPLANCHNIC VEINS
+   Mathcard.Library.Vessels.I1O1.Autoregulating.CRL_LP_AVu ExtraSplanchnicVeins(R = Param_ExtraSplanchnicVeins_R, I = Param_ExtraSplanchnicVeins_I, C = Param_ExtraSplanchnicVeins_C, V0 = Param_ExtraSplanchnicVeins_V0, Vu0 = Param_ExtraSplanchnicVeins_Vu0, VuRef0 = Param_ExtraSplanchnicVeins_VuRef0, AGain = Param_ExtraSplanchnicVeins_AGain, ADelay = Param_ExtraSplanchnicVeins_ADelay, ATau = Param_ExtraSplanchnicVeins_ATau) annotation(
+     Placement(visible = true, transformation(origin = {-70.0, -70.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = -180)));
++  // RIGHT ATRIUM
+   Mathcard.Library.Heart.AutoregulatingChambers.Atrium RightAtrium(C = Param_RightAtrium_C, V0 = Param_RightAtrium_V0, Vu0 = Param_RightAtrium_Vu0) annotation(
+     Placement(visible = true, transformation(origin = {-30.0, 30.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
++  // TRICUSPID VALVE
+   Mathcard.Library.Heart.Valves.Valve_AV TricuspidValve(R = Param_TricuspidValve_R) annotation(
+     Placement(visible = true, transformation(origin = {-30.0, 10.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
++  // RIGHT VENTRICLE
+   Mathcard.Library.Heart.AutoregulatingChambers.Ventricle RightVentricle(V0 = Param_RightVentricle_V0, kR = Param_RightVentricle_kR, Emax0 = Param_RightVentricle_Emax0, EmaxRef0 = Param_RightVentricle_EmaxRef0, AGain_Emax = Param_RightVentricle_AGain_Emax, ADelay_Emax = Param_RightVentricle_ADelay_Emax, ATau_Emax = Param_RightVentricle_ATau_Emax, P0 = Param_RightVentricle_P0, kE = Param_RightVentricle_kE, TSys0 = Param_RightVentricle_TSys0, kSys = Param_RightVentricle_kSys, TRef0 = Param_RightVentricle_TRef0, AGain_Ts = Param_RightVentricle_AGain_Ts, ADelay_Ts = Param_RightVentricle_ADelay_Ts, ATau_Ts = Param_RightVentricle_ATau_Ts, AGain_Tv = Param_RightVentricle_AGain_Tv, ADelay_Tv = Param_RightVentricle_ADelay_Tv, ATau_Tv = Param_RightVentricle_ATau_Tv) annotation(
+     Placement(visible = true, transformation(origin = {-30.0, -10.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
++  // PULMONARY VALVE
+   Mathcard.Library.Heart.Valves.Valve_VC PulmonaryValve(kR = Param_PulmonaryValve_kR) annotation(
+     Placement(visible = true, transformation(origin = {-30.0, -30.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
++  // PULMONARY ARTERIES
+   Mathcard.Library.Vessels.I1O1.Linear.CRL_LP PulmonaryArteries(R = Param_PulmonaryArteries_R, I = Param_PulmonaryArteries_I, C = Param_PulmonaryArteries_C, V0 = Param_PulmonaryArteries_V0, Vu0 = Param_PulmonaryArteries_Vu0) annotation(
+     Placement(visible = true, transformation(origin = {-50.0, 80.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = -360)));
++  // PULMONARY PERIPHERAL CIRCULATION
+   Mathcard.Library.Vessels.I1O1.Linear.CRL_LP PulmonaryPeriphericalCirculation(R = Param_PulmonaryPeriphericalCirculation_R, I = Param_PulmonaryPeriphericalCirculation_I, C = Param_PulmonaryPeriphericalCirculation_C, V0 = Param_PulmonaryPeriphericalCirculation_V0, Vu0 = Param_PulmonaryPeriphericalCirculation_Vu0) annotation(
+     Placement(visible = true, transformation(origin = {0.0, 80.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
++  // PULMONARY VEINS
+   Mathcard.Library.Vessels.I1O1.Linear.CRL_LP PulmonaryVeins(R = Param_PulmonaryVeins_R, I = Param_PulmonaryVeins_I, C = Param_PulmonaryVeins_C, V0 = Param_PulmonaryVeins_V0, Vu0 = Param_PulmonaryVeins_Vu0) annotation(
+     Placement(visible = true, transformation(origin = {50.0, 80.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
++  // AUTOREGULATION CENTER
+   Mathcard.Library.AutoregulationCenters.Autoregulation_Center AutoregulationCenter(TauP = Param_AutoregulationCenter_TauP, TauZ = Param_AutoregulationCenter_TauZ, Pn = Param_AutoregulationCenter_Pn, ka = Param_AutoregulationCenter_ka, fmin = Param_AutoregulationCenter_fmin, fmax = Param_AutoregulationCenter_fmax, fesinf = Param_AutoregulationCenter_fesinf, fes0 = Param_AutoregulationCenter_fes0, fesmin = Param_AutoregulationCenter_fesmin, kes = Param_AutoregulationCenter_kes, fev0 = Param_AutoregulationCenter_fev0, fevinf = Param_AutoregulationCenter_fevinf, fcs0 = Param_AutoregulationCenter_fcs0, kev = Param_AutoregulationCenter_kev) annotation(
+     Placement(visible = true, transformation(origin = {0.0, -30.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = -630)));
+ equation
+@@ -98,4 +120,4 @@
+   annotation(
+     experiment(StopTime = 200),
+     Diagram(coordinateSystem(extent = {{-100.0, -100.0}, {100.0, 100.0}}, preserveAspectRatio = true, initialScale = 0.1, grid = {10, 10})));
+-end Ursino1998ModelVad;
++end Ursino1998Model_VAD2;

@@ -1,0 +1,34 @@
+--- /media/matthias/Data/Programmation/git/VAD-0D-DNN/modelica/parameters/Ursino1998Model	Fri Mar  6 17:54:49 2020
++++ /media/matthias/Data/Programmation/git/VAD-0D-DNN/modelica/parameters/Ursino1998ModelVad	Fri Mar  6 17:55:08 2020
+@@ -1,6 +1,9 @@
+-model Ursino1998Model
++model Ursino1998ModelVad
++  extends ModelParametersNH;
++  //extends HMIII.ModelParametersMHF;
+   import Mathcard.Library.*;
+-  extends Mathcard.Applications.Ursino1998.ModelParametersNH;
++  Mathcard.Library.Devices.VAD LVAD(RPM = Param_LVAD_RPM) annotation(
++    Placement(visible = true, transformation(origin = {80.0, -20.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
+   Mathcard.Library.Heart.AutoregulatingChambers.Atrium LeftAtrium(C = Param_LeftAtrium_C, V0 = Param_LeftAtrium_V0, Vu0 = Param_LeftAtrium_Vu0) annotation(
+     Placement(visible = true, transformation(origin = {30.0, 30.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
+   Mathcard.Library.Heart.Valves.Valve_AV MitralicValve(R = Param_MitralicValve_R) annotation(
+@@ -36,6 +39,10 @@
+   Mathcard.Library.AutoregulationCenters.Autoregulation_Center AutoregulationCenter(TauP = Param_AutoregulationCenter_TauP, TauZ = Param_AutoregulationCenter_TauZ, Pn = Param_AutoregulationCenter_Pn, ka = Param_AutoregulationCenter_ka, fmin = Param_AutoregulationCenter_fmin, fmax = Param_AutoregulationCenter_fmax, fesinf = Param_AutoregulationCenter_fesinf, fes0 = Param_AutoregulationCenter_fes0, fesmin = Param_AutoregulationCenter_fesmin, kes = Param_AutoregulationCenter_kes, fev0 = Param_AutoregulationCenter_fev0, fevinf = Param_AutoregulationCenter_fevinf, fcs0 = Param_AutoregulationCenter_fcs0, kev = Param_AutoregulationCenter_kev) annotation(
+     Placement(visible = true, transformation(origin = {0.0, -30.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = -630)));
+ equation
++  connect(LVAD.Inlet, MitralicValve.Outlet) annotation(
++    Line(visible = true, points = {{80.0, -12.0}, {80.0, 2.0}, {30.0, 2.0}}, color = {255, 0, 0}, thickness = 2));
++  connect(LVAD.Outlet, SystemicArteries.Inlet) annotation(
++    Line(visible = true, points = {{80.0, -28.0}, {80.0, -50.0}, {90.0, -50.0}, {90.0, -80.0}, {78.0, -80.0}}, color = {255, 0, 0}, thickness = 2));
+   connect(AutoregulationCenter.Active_fes, RightVentricle.Active_fes) annotation(
+     Line(visible = true, points = {{-3.0, -22.0}, {-3.0, -13.0}, {-21.0, -13.0}}, color = {0, 128, 0}, thickness = 1));
+   connect(AutoregulationCenter.Active_fes, SplanchnicPeripheralCirculation.Active_fes) annotation(
+@@ -89,6 +96,6 @@
+   connect(RightAtrium.Outlet, TricuspidValve.Inlet) annotation(
+     Line(visible = true, points = {{-30.0, 22.0}, {-30.0, 18.0}}));
+   annotation(
+-    experiment(StopTime = 20, __Wolfram_SynchronizeWithRealTime = false),
++    experiment(StopTime = 200),
+     Diagram(coordinateSystem(extent = {{-100.0, -100.0}, {100.0, 100.0}}, preserveAspectRatio = true, initialScale = 0.1, grid = {10, 10})));
+-end Ursino1998Model;
++end Ursino1998ModelVad;
