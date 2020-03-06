@@ -580,7 +580,8 @@ Connector with one input signal of type Real.
           Real deltaTs(start = 0);
           Real deltaTv(start = 0);
           Real HR;
-          Real T;
+        public 
+          Real T;           // should be protected
         equation
           Qin = Inlet.Q;
           Qout = -Outlet.Q;
@@ -673,7 +674,8 @@ Connector with one input signal of type Real.
           Placement(visible = true, transformation(origin = {0.0, 60.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0), iconTransformation(origin = {0.0, 80.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
         Mathcard.Library.Connectors.Orifice Outlet annotation(
           Placement(visible = true, transformation(origin = {0.0, -51.6731}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0), iconTransformation(origin = {0.0, -80.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
-      public // this should be protected
+      public
+        // this should be protected
         Real Q;
         Real dP;
       equation
@@ -713,15 +715,18 @@ Connector with one input signal of type Real.
           Placement(visible = true, transformation(origin = {0.0, 60.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0), iconTransformation(origin = {0.0, 80.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
         Mathcard.Library.Connectors.Orifice Outlet annotation(
           Placement(visible = true, transformation(origin = {0.0, -51.6731}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0), iconTransformation(origin = {0.0, -80.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
-      public // this should be protected
+      public
+        // this should be protected
         Real Q;
         Real dP;
       equation
         Inlet.Q = Q;
         Outlet.Q = -Q;
         dP = Outlet.P - Inlet.P;
-        Q = if RPM == 3000 then (-0.12205 * dP ^ 2) + 3.0093 * dP + 29.886 else if RPM == 4000 then (-0.048803 * dP ^ 2) + 1.8484 * dP + 57.770 else if RPM == 5000 then (-0.024594 * dP ^ 2) + 1.29678 * dP + 84.081 else if RPM == 6000 then (-0.012153 * dP ^ 2) + 0.81934 * dP + 107.02 else if RPM == 7000 then (-0.013720 * dP ^ 2) + 2.1611 * dP + 51.474 else if RPM == 8000 then (-0.0055313 * dP ^ 2) + 0.70504 * dP + 143.71 else (-0.0042916 * dP ^ 2) + 0.80525 * dP + 141.18;
-/* if RPM == 9000 then */
+        // For now we artificially prevent any backlow
+        // by setting the min of Q to 0
+        Q = max(0, if RPM == 3000 then if dP < 12.33 then 48.43 else (-0.12205 * dP ^ 2) + 3.0093 * dP + 29.886 else if RPM == 4000 then if dP < 18.94 then 75.27 else (-0.048803 * dP ^ 2) + 1.8484 * dP + 57.770 else if RPM == 5000 then if dP < 26.36 then 101.17 else (-0.024594 * dP ^ 2) + 1.29678 * dP + 84.081 else if RPM == 6000 then if dP < 33.71 then 120.83 else (-0.012153 * dP ^ 2) + 0.81934 * dP + 107.02 else if RPM == 7000 then if dP < 78.76 then 136.57 else (-0.013720 * dP ^ 2) + 2.1611 * dP + 51.474 else if RPM == 8000 then if dP < 63.73 then 166.28 else (-0.0055313 * dP ^ 2) + 0.70504 * dP + 143.71 else if dP < 93.82 then 178.95 else (-0.0042916 * dP ^ 2) + 0.80525 * dP + 141.18);
+        //Q = 0;
         annotation(
           Diagram(coordinateSystem(extent = {{-148.5, -105.0}, {148.5, 105.0}}, preserveAspectRatio = true, initialScale = 0.1, grid = {10, 10})),
           Icon(coordinateSystem(extent = {{-100.0, -100.0}, {100.0, 100.0}}, preserveAspectRatio = true, initialScale = 0.1, grid = {10, 10}), graphics = {Rectangle(visible = true, fillColor = {255, 128, 0}, fillPattern = FillPattern.Solid, extent = {{-20.0, -70.0}, {20.0, 70.0}}), Text(visible = true, fillColor = {128, 0, 0}, fillPattern = FillPattern.Solid, extent = {{-16.8042, -10.5833}, {16.8042, 10.5833}}, textString = "VAD", fontName = "Arial"), Text(visible = true, origin = {30.0, 80.0}, fillPattern = FillPattern.Solid, extent = {{-10.0, -10.0}, {10.0, 10.0}}, textString = "I", fontName = "Arial"), Text(visible = true, origin = {30.0, -80.0}, fillPattern = FillPattern.Solid, extent = {{-10.0, -10.0}, {10.0, 10.0}}, textString = "O", fontName = "Arial")}));
@@ -828,7 +833,7 @@ Connector with one input signal of type Real.
         connect(RightAtrium.Outlet, TricuspidValve.Inlet) annotation(
           Line(visible = true, points = {{-30.0, 22.0}, {-30.0, 18.0}}));
         annotation(
-          experiment(StopTime = 20, __Wolfram_SynchronizeWithRealTime = false),
+          experiment(StopTime = 200, __Wolfram_SynchronizeWithRealTime = false),
           Diagram(coordinateSystem(extent = {{-100.0, -100.0}, {100.0, 100.0}}, preserveAspectRatio = true, initialScale = 0.1, grid = {10, 10})));
       end Ursino1998Model;
 
@@ -1179,68 +1184,66 @@ Connector with one input signal of type Real.
       end Ursino1998ModelECMO;
 
       package HMIII
-
         model Ursino1998Model_VAD2 "HMIII VAD model"
-        // EXTEND THE SUPERCLASS
-        // CHOOSE THE HEART FAILURE LEVEL (MHF / SHF)
+          // EXTEND THE SUPERCLASS
+          // CHOOSE THE HEART FAILURE LEVEL (MHF / SHF)
           extends HMIII.ModelParametersMHF;
-        // IMPORT MATHCARD LIBRARY
+          // IMPORT MATHCARD LIBRARY
           import Mathcard.Library.*;
-        
-        // ============================
-        //
-        // VAD DEVICE
+          // ============================
+          //
+          // VAD DEVICE
           Mathcard.Library.Devices.VAD2 LVAD(RPM = Param_LVAD_RPM) annotation(
             Placement(visible = true, transformation(origin = {80.0, -20.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
-        // LEFT ATRIUM
+          // LEFT ATRIUM
           Mathcard.Library.Heart.AutoregulatingChambers.Atrium LeftAtrium(C = Param_LeftAtrium_C, V0 = Param_LeftAtrium_V0, Vu0 = Param_LeftAtrium_Vu0) annotation(
             Placement(visible = true, transformation(origin = {30.0, 30.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
-        // MITRALIC VALVE
+          // MITRALIC VALVE
           Mathcard.Library.Heart.Valves.Valve_AV MitralicValve(R = Param_MitralicValve_R) annotation(
             Placement(visible = true, transformation(origin = {30.0, 10.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
-        // LEFT VENTRICLE
+          // LEFT VENTRICLE
           Mathcard.Library.Heart.AutoregulatingChambers.Ventricle LeftVentricle(V0 = Param_LeftVentricle_V0, kR = Param_LeftVentricle_kR, Emax0 = Param_LeftVentricle_Emax0, EmaxRef0 = Param_LeftVentricle_EmaxRef0, AGain_Emax = Param_LeftVentricle_AGain_Emax, ADelay_Emax = Param_LeftVentricle_ADelay_Emax, ATau_Emax = Param_LeftVentricle_ATau_Emax, P0 = Param_LeftVentricle_P0, kE = Param_LeftVentricle_kE, TSys0 = Param_LeftVentricle_TSys0, kSys = Param_LeftVentricle_kSys, TRef0 = Param_LeftVentricle_TRef0, AGain_Ts = Param_LeftVentricle_AGain_Ts, ADelay_Ts = Param_LeftVentricle_ADelay_Ts, ATau_Ts = Param_LeftVentricle_ATau_Ts, AGain_Tv = Param_LeftVentricle_AGain_Tv, ADelay_Tv = Param_LeftVentricle_ADelay_Tv, ATau_Tv = Param_LeftVentricle_ATau_Tv) annotation(
             Placement(visible = true, transformation(origin = {30.0, -10.0}, extent = {{10.0, -10.0}, {-10.0, 10.0}}, rotation = 0)));
-        // AORTIC VALVE
+          // AORTIC VALVE
           Mathcard.Library.Heart.Valves.Valve_VC AorticValve(kR = Param_AorticValve_kR) annotation(
             Placement(visible = true, transformation(origin = {30.0, -30.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
-        // SYSTEMIC ARTERIES
+          // SYSTEMIC ARTERIES
           Mathcard.Library.Vessels.I1O1.Linear.CRL_LP SystemicArteries(R = Param_SystemicArteries_R, I = Param_SystemicArteries_I, C = Param_SystemicArteries_C, V0 = Param_SystemicArteries_V0, Vu0 = Param_SystemicArteries_Vu0) annotation(
             Placement(visible = true, transformation(origin = {70.0, -80.0}, extent = {{10.0, -10.0}, {-10.0, 10.0}}, rotation = 0)));
-        // SPLANCHNIC PERIPHERAL CIRCULATION
+          // SPLANCHNIC PERIPHERAL CIRCULATION
           Mathcard.Library.Vessels.I1O1.Autoregulating.CRL_LP_AR SplanchnicPeripheralCirculation(R0 = Param_SplanchnicPeripheralCirculation_R0, RRef0 = Param_SplanchnicPeripheralCirculation_RRef0, AGain = Param_SplanchnicPeripheralCirculation_AGain, ADelay = Param_SplanchnicPeripheralCirculation_ADelay, ATau = Param_SplanchnicPeripheralCirculation_ATau, I = Param_SplanchnicPeripheralCirculation_I, C = Param_SplanchnicPeripheralCirculation_C, V0 = Param_SplanchnicPeripheralCirculation_V0, Vu0 = Param_SplanchnicPeripheralCirculation_Vu0) annotation(
             Placement(visible = true, transformation(origin = {0.0, -90.0}, extent = {{10.0, -10.0}, {-10.0, 10.0}}, rotation = 0)));
-        // EXTRASPLANCHNIC PERIPHERAL CIRCULATION
+          // EXTRASPLANCHNIC PERIPHERAL CIRCULATION
           Mathcard.Library.Vessels.I1O1.Autoregulating.CRL_LP_AR ExtraSplanchnicPeripheralCirculation(R0 = Param_ExtraSplanchnicPeripheralCirculation_R0, RRef0 = Param_ExtraSplanchnicPeripheralCirculation_RRef0, AGain = Param_ExtraSplanchnicPeripheralCirculation_AGain, ADelay = Param_ExtraSplanchnicPeripheralCirculation_ADelay, ATau = Param_ExtraSplanchnicPeripheralCirculation_ATau, I = Param_ExtraSplanchnicPeripheralCirculation_I, C = Param_ExtraSplanchnicPeripheralCirculation_C, V0 = Param_ExtraSplanchnicPeripheralCirculation_V0, Vu0 = Param_ExtraSplanchnicPeripheralCirculation_Vu0) annotation(
             Placement(visible = true, transformation(origin = {0.0, -70.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = -180)));
-        // SPLANCHNIC VEINS
+          // SPLANCHNIC VEINS
           Mathcard.Library.Vessels.I1O1.Autoregulating.CRL_LP_AVu SplanchnicVeins(R = Param_SplanchnicVeins_R, I = Param_SplanchnicVeins_I, C = Param_SplanchnicVeins_C, V0 = Param_SplanchnicVeins_V0, Vu0 = Param_SplanchnicVeins_Vu0, VuRef0 = Param_SplanchnicVeins_VuRef0, AGain = Param_SplanchnicVeins_AGain, ADelay = Param_SplanchnicVeins_ADelay, ATau = Param_SplanchnicVeins_ATau) annotation(
             Placement(visible = true, transformation(origin = {-70.0, -90.0}, extent = {{10.0, -10.0}, {-10.0, 10.0}}, rotation = 0)));
-        // EXTRASPLANCHNIC VEINS
+          // EXTRASPLANCHNIC VEINS
           Mathcard.Library.Vessels.I1O1.Autoregulating.CRL_LP_AVu ExtraSplanchnicVeins(R = Param_ExtraSplanchnicVeins_R, I = Param_ExtraSplanchnicVeins_I, C = Param_ExtraSplanchnicVeins_C, V0 = Param_ExtraSplanchnicVeins_V0, Vu0 = Param_ExtraSplanchnicVeins_Vu0, VuRef0 = Param_ExtraSplanchnicVeins_VuRef0, AGain = Param_ExtraSplanchnicVeins_AGain, ADelay = Param_ExtraSplanchnicVeins_ADelay, ATau = Param_ExtraSplanchnicVeins_ATau) annotation(
             Placement(visible = true, transformation(origin = {-70.0, -70.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = -180)));
-        // RIGHT ATRIUM
+          // RIGHT ATRIUM
           Mathcard.Library.Heart.AutoregulatingChambers.Atrium RightAtrium(C = Param_RightAtrium_C, V0 = Param_RightAtrium_V0, Vu0 = Param_RightAtrium_Vu0) annotation(
             Placement(visible = true, transformation(origin = {-30.0, 30.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
-        // TRICUSPID VALVE
+          // TRICUSPID VALVE
           Mathcard.Library.Heart.Valves.Valve_AV TricuspidValve(R = Param_TricuspidValve_R) annotation(
             Placement(visible = true, transformation(origin = {-30.0, 10.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
-        // RIGHT VENTRICLE
+          // RIGHT VENTRICLE
           Mathcard.Library.Heart.AutoregulatingChambers.Ventricle RightVentricle(V0 = Param_RightVentricle_V0, kR = Param_RightVentricle_kR, Emax0 = Param_RightVentricle_Emax0, EmaxRef0 = Param_RightVentricle_EmaxRef0, AGain_Emax = Param_RightVentricle_AGain_Emax, ADelay_Emax = Param_RightVentricle_ADelay_Emax, ATau_Emax = Param_RightVentricle_ATau_Emax, P0 = Param_RightVentricle_P0, kE = Param_RightVentricle_kE, TSys0 = Param_RightVentricle_TSys0, kSys = Param_RightVentricle_kSys, TRef0 = Param_RightVentricle_TRef0, AGain_Ts = Param_RightVentricle_AGain_Ts, ADelay_Ts = Param_RightVentricle_ADelay_Ts, ATau_Ts = Param_RightVentricle_ATau_Ts, AGain_Tv = Param_RightVentricle_AGain_Tv, ADelay_Tv = Param_RightVentricle_ADelay_Tv, ATau_Tv = Param_RightVentricle_ATau_Tv) annotation(
             Placement(visible = true, transformation(origin = {-30.0, -10.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
-        // PULMONARY VALVE
+          // PULMONARY VALVE
           Mathcard.Library.Heart.Valves.Valve_VC PulmonaryValve(kR = Param_PulmonaryValve_kR) annotation(
             Placement(visible = true, transformation(origin = {-30.0, -30.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
-        // PULMONARY ARTERIES
+          // PULMONARY ARTERIES
           Mathcard.Library.Vessels.I1O1.Linear.CRL_LP PulmonaryArteries(R = Param_PulmonaryArteries_R, I = Param_PulmonaryArteries_I, C = Param_PulmonaryArteries_C, V0 = Param_PulmonaryArteries_V0, Vu0 = Param_PulmonaryArteries_Vu0) annotation(
             Placement(visible = true, transformation(origin = {-50.0, 80.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = -360)));
-        // PULMONARY PERIPHERAL CIRCULATION
+          // PULMONARY PERIPHERAL CIRCULATION
           Mathcard.Library.Vessels.I1O1.Linear.CRL_LP PulmonaryPeriphericalCirculation(R = Param_PulmonaryPeriphericalCirculation_R, I = Param_PulmonaryPeriphericalCirculation_I, C = Param_PulmonaryPeriphericalCirculation_C, V0 = Param_PulmonaryPeriphericalCirculation_V0, Vu0 = Param_PulmonaryPeriphericalCirculation_Vu0) annotation(
             Placement(visible = true, transformation(origin = {0.0, 80.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
-        // PULMONARY VEINS
+          // PULMONARY VEINS
           Mathcard.Library.Vessels.I1O1.Linear.CRL_LP PulmonaryVeins(R = Param_PulmonaryVeins_R, I = Param_PulmonaryVeins_I, C = Param_PulmonaryVeins_C, V0 = Param_PulmonaryVeins_V0, Vu0 = Param_PulmonaryVeins_Vu0) annotation(
             Placement(visible = true, transformation(origin = {50.0, 80.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
-        // AUTOREGULATION CENTER
+          // AUTOREGULATION CENTER
           Mathcard.Library.AutoregulationCenters.Autoregulation_Center AutoregulationCenter(TauP = Param_AutoregulationCenter_TauP, TauZ = Param_AutoregulationCenter_TauZ, Pn = Param_AutoregulationCenter_Pn, ka = Param_AutoregulationCenter_ka, fmin = Param_AutoregulationCenter_fmin, fmax = Param_AutoregulationCenter_fmax, fesinf = Param_AutoregulationCenter_fesinf, fes0 = Param_AutoregulationCenter_fes0, fesmin = Param_AutoregulationCenter_fesmin, kes = Param_AutoregulationCenter_kes, fev0 = Param_AutoregulationCenter_fev0, fevinf = Param_AutoregulationCenter_fevinf, fcs0 = Param_AutoregulationCenter_fcs0, kev = Param_AutoregulationCenter_kev) annotation(
             Placement(visible = true, transformation(origin = {0.0, -30.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = -630)));
         equation
@@ -1304,25 +1307,26 @@ Connector with one input signal of type Real.
             experiment(StopTime = 200),
             Diagram(coordinateSystem(extent = {{-100.0, -100.0}, {100.0, 100.0}}, preserveAspectRatio = true, initialScale = 0.1, grid = {10, 10})));
         end Ursino1998Model_VAD2;
+
         partial model ModelParameters "Abstract class regrouping common parameters"
-        /* PUMP RPMs */
+          /* PUMP RPMs */
           //parameter Real Param_LVAD_RPM = 3000;
           //parameter Real Param_LVAD_RPM = 4000;
-          //parameter Real Param_LVAD_RPM = 5000;
+          parameter Real Param_LVAD_RPM = 5000;
           //parameter Real Param_LVAD_RPM = 6000;
           //parameter Real Param_LVAD_RPM = 7000;
-          parameter Real Param_LVAD_RPM = 8000;
+          //parameter Real Param_LVAD_RPM = 8000;
           //parameter Real Param_LVAD_RPM = 9000;
-        //
-        // ======================================
-        //
-        // Virtual parameters: related to heart failure level
+          //
+          // ======================================
+          //
+          // Virtual parameters: related to heart failure level
           replaceable parameter Real Param_LeftVentricle_Emax0;
           replaceable parameter Real Param_LeftVentricle_EmaxRef0;
           replaceable parameter Real Param_LeftVentricle_kE(unit = "1/ml");
-        //
-        // ======================================
-        //
+          //
+          // ======================================
+          //
           parameter Real Param_LeftAtrium_C = 19.23;
           parameter Real Param_LeftAtrium_V0(unit = "ml") = 25;
           parameter Real Param_LeftAtrium_Vu0(unit = "ml") = 25;
@@ -1451,13 +1455,14 @@ Connector with one input signal of type Real.
           // Inheritage
           extends ModelParameters;
           // Parameters
-          parameter Real Param_LeftVentricle_Emax0 = 0.2;
-          parameter Real Param_LeftVentricle_EmaxRef0 = 0.2;
-          parameter Real Param_LeftVentricle_kE(unit = "1/ml") = 0.011;
+          redeclare parameter Real Param_LeftVentricle_Emax0 = 0.2;
+          redeclare parameter Real Param_LeftVentricle_EmaxRef0 = 0.2;
+          redeclare parameter Real Param_LeftVentricle_kE(unit = "1/ml") = 0.011;
         end ModelParametersSHF;
       end HMIII;
-      
+
       model Ursino1998ModelVad
+        //extends Mathcard.Applications.Ursino1998.ModelParametersNH;
         extends HMIII.ModelParametersMHF;
         import Mathcard.Library.*;
         Mathcard.Library.Devices.VAD LVAD(RPM = Param_LVAD_RPM) annotation(
@@ -1554,7 +1559,7 @@ Connector with one input signal of type Real.
         connect(RightAtrium.Outlet, TricuspidValve.Inlet) annotation(
           Line(visible = true, points = {{-30.0, 22.0}, {-30.0, 18.0}}));
         annotation(
-          experiment(StopTime = 200),
+          experiment(StopTime = 20, Interval = 0.002),
           Diagram(coordinateSystem(extent = {{-100.0, -100.0}, {100.0, 100.0}}, preserveAspectRatio = true, initialScale = 0.1, grid = {10, 10})));
       end Ursino1998ModelVad;
       annotation(
