@@ -1,0 +1,6 @@
+
+
+========================= QUESTIONS TO JEAN ========================
+
+
+* RPM in simulations ? Guess it's not varying... which value should I take ? 5000 ? A value for which the aortic valve still opens ? 
