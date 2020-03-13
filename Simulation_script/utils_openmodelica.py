@@ -2,6 +2,8 @@ from OMPython import OMCSessionZMQ
 from random import seed
 from random import random
 import os
+from setup import *
+import shutil
 
 from timeit import default_timer as timer
 
@@ -33,6 +35,9 @@ def changeValueInFile(filepath, listParameter, outputfile, outputfolder):
     filehandlerout = open(filepath + "/" + outputfile, "w")
     for line in filehandler:
         copyLine = 1
+        # Principle: find the following model in the file,
+        # once it is found, we modify as many as `numparams` parameters,
+        # thus it's ensured that only the params of that model are modified
         if "model ModelParametersNH" in line:
             numParameters = 0
         for parameter in listParameter:
@@ -49,16 +54,27 @@ def changeValueInFile(filepath, listParameter, outputfile, outputfolder):
         count = count + 1
     filehandler.close()
     filehandlerout.close()
-    os.rename(filepath + "/" + outputfile, outputfolder + "/models/" + outputfile)
+
+    q("shutil.move :" + filepath + outputfile + "->" + outputfolder + "/models/" + outputfile)
+    #os.rename(filepath + "/" + outputfile, outputfolder + "/models/" + outputfile)
+    shutil.move(filepath + "/" + outputfile, outputfolder + "/models/" + outputfile)
+    #shutil.copy(filepath + "/" + outputfile, outputfolder + "/models/" + outputfile)
+    #shutil.rmtree(filepath + "/" + outputfile)
 
     
 def prepareOutputFolder(outputfolder):
-    try: 
+    try:
+        q("1")
         os.mkdir(outputfolder)
+        q("2")
         os.mkdir(outputfolder + '/models')
+        q("3")
         os.mkdir(outputfolder + '/outputs')
+        q("prepareOutputFolder: models and outputs folders were created in"+ outputFolder)
+        return True
     except Exception:
-        print("Directory " + outputfolder + " exists!" )
+        print("<ERROR> Directory " + outputfolder + " exists!")
+    return False
     
 def launchSimulation(filepath, listParameters, suffix, outputfolder):
     outputfile = "Mathcard" + "_" + suffix + ".mo"
@@ -70,5 +86,6 @@ def launchSimulation(filepath, listParameters, suffix, outputfolder):
     start = timer()
     omc.sendExpression("simulate(Mathcard.Applications.Ursino1998.Ursino1998Model, stopTime=20.0, numberOfIntervals=500, simflags=\"-emit_protected\")")
     end = timer()
-    print(end - start)
-    os.rename("Mathcard.Applications.Ursino1998.Ursino1998Model_res.mat", outputfolder + "/outputs/" + matrixoutput)
+    print("Simulation time [{}]\t{:.4}".format(suffix, end - start))
+    shutil.move("Mathcard.Applications.Ursino1998.Ursino1998Model_res.mat", outputfolder + "/outputs/" + matrixoutput)
+

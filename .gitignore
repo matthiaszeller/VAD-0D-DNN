@@ -5,3 +5,6 @@
 
 # Pycharm config files
 *.xml
+
+#
+*.pyc

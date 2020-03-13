@@ -9,10 +9,16 @@ import utils_openmodelica as uo
 
 import datetime
 
-filepath="/Users/jean.bonnemain/Documents/Code/0d_model/Modelica_Code/0D_Original/"
+# File paths
+from setup import *
+
 today = datetime.datetime.now()
 
-outputfolder=os.getcwd() + '/' + today.strftime("%Y") + '_' + today.strftime("%m") + '_' + today.strftime("%d")
+if outputfolder == None or outputfolder == "":
+    outputfolder=os.getcwd() + '/' + today.strftime("%Y") + '_' + today.strftime("%m") + '_' + today.strftime("%d")
+
+
+q("<INFO> The output folder is "+outputfolder)
 
 # list of parameters which we vary
 param1 = uo.Parameter("Param_LeftVentricle_Emax0", 0.2, 2.95)
@@ -22,9 +28,12 @@ param4 = uo.Parameter("Param_LeftVentricle_kE", 0.011, 0.014)
 
 listParameters = [param1, param2, param3, param4]
 
-numberofsamples = 3
+numberofsamples = 2
 
-uo.prepareOutputFolder(outputfolder)
+outputCreated = uo.prepareOutputFolder(outputfolder)
+#if not outputCreated:
+#    print("<INFO> The program is aborted.")
+#    exit(0)
 
 for indexsample in range(0,numberofsamples):
     suffix = str(indexsample)
