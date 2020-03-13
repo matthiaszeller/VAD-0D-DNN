@@ -1,3 +1,7 @@
 
 # Jupyter notebook checkpoints
 *.ipynb_checkpoints*
+
+
+# Pycharm config files
+*.xml
