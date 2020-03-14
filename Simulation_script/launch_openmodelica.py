@@ -14,9 +14,8 @@ from setup import *
 
 today = datetime.datetime.now()
 
-if outputfolder == None or outputfolder == "":
-    outputfolder=os.getcwd() + '/' + today.strftime("%Y") + '_' + today.strftime("%m") + '_' + today.strftime("%d")
-
+#outputfolder=os.getcwd() + '/' + today.strftime("%Y") + '_' + today.strftime("%m") + '_' + today.strftime("%d")
+outputfolder += "_" + today.strftime("%Y") + '_' + today.strftime("%m") + '_' + today.strftime("%d")
 
 q("<INFO> The output folder is "+outputfolder)
 
@@ -28,7 +27,7 @@ param4 = uo.Parameter("Param_LeftVentricle_kE", 0.011, 0.014)
 
 listParameters = [param1, param2, param3, param4]
 
-numberofsamples = 2
+numberofsamples = 1
 
 outputCreated = uo.prepareOutputFolder(outputfolder)
 #if not outputCreated:

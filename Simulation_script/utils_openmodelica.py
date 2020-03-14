@@ -57,7 +57,7 @@ def changeValueInFile(filepath, listParameter, outputfile, outputfolder):
 
     q("shutil.move :" + filepath + outputfile + "->" + outputfolder + "/models/" + outputfile)
     #os.rename(filepath + "/" + outputfile, outputfolder + "/models/" + outputfile)
-    shutil.move(filepath + "/" + outputfile, outputfolder + "/models/" + outputfile)
+    shutil.move(filepath + outputfile, outputfolder + "/models/" + outputfile)
     #shutil.copy(filepath + "/" + outputfile, outputfolder + "/models/" + outputfile)
     #shutil.rmtree(filepath + "/" + outputfile)
 
@@ -84,8 +84,10 @@ def launchSimulation(filepath, listParameters, suffix, outputfolder):
     omc.sendExpression("instantiateModel(Mathcard.Applications.Ursino1998.Ursino1998Model)")
     matrixoutput = "Ursino1998Model_output" "_" + suffix + ".mat"
     start = timer()
-    omc.sendExpression("simulate(Mathcard.Applications.Ursino1998.Ursino1998Model, stopTime=20.0, numberOfIntervals=500, simflags=\"-emit_protected\")")
+    omc.sendExpression("simulate(Mathcard.Applications.Ursino1998.Ursino1998Model, \
+    stopTime=20.0, numberOfIntervals=500, \
+    simflags=\"-emit_protected\", outputFormat=\"mat\")")
     end = timer()
     print("Simulation time [{}]\t{:.4}".format(suffix, end - start))
-    shutil.move("Mathcard.Applications.Ursino1998.Ursino1998Model_res.mat", outputfolder + "/outputs/" + matrixoutput)
+    #shutil.move("Mathcard.Applications.Ursino1998.Ursino1998Model_res.mat", outputfolder + "/outputs/" + matrixoutput)
 
