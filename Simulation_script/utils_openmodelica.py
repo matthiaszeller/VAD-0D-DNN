@@ -77,7 +77,7 @@ def prepareOutputFolder(outputfolder):
     return False
 
 
-def launchSimulation(filepath, listParameters, suffix, outputfolder):
+def launchSimulation(filepath, listParameters, suffix, outputfolder, LVAD=False):
     # Store the output of the commands
     env = {}
 
@@ -88,18 +88,34 @@ def launchSimulation(filepath, listParameters, suffix, outputfolder):
         if not "instantiateModel" in cmd:
             q(str(env[cmd]))
 
+    # 1. DETERMINE OUTPUT FILE
     outputfile = "Mathcard" + "_" + suffix + ".mo"
+
+    # 2. CREATE NEW MODELICA FILE AND CHANGE PARAMS
     changeValueInFile(filepath, listParameters, outputfile, outputfolder)
+
+    # 3. LOAD MODELS
+    model_name = "Mathcard.Applications.Ursino1998.Ursino1998Model"
+    if LVAD: model_name = "Mathcard.Applications.Ursino1998.HMIII.Ursino1998Model_VAD2"
+
     run("loadModel(Modelica)")
     run("loadFile(\"" + outputfolder + "/models/" + outputfile + "\")")
-    run("instantiateModel(Mathcard.Applications.Ursino1998.Ursino1998Model)")
-    matrixoutput = "Ursino1998Model_output" "_" + suffix + ".mat"
+    run("instantiateModel({})".format(model_name))
+
+    # 4. RUN THE SIMULATION
     start = timer()
-    run("simulate(Mathcard.Applications.Ursino1998.Ursino1998Model, \
+    run("simulate({}, \
     stopTime=20.0, numberOfIntervals=500, \
-    simflags=\"-emit_protected\", outputFormat=\"mat\")")
+    simflags=\"-emit_protected\", outputFormat=\"mat\")".format(model_name))
     end = timer()
+
+    # 5. REPORT SIMULATION TIME
     print("Simulation time [{}]\t{:.4}".format(suffix, end - start))
-    q("shutil.move: Mathcard.Applications.Ursino1998.Ursino1998Model_res.mat -> " + outputfolder + "/outputs/" + matrixoutput)
-    shutil.move("Mathcard.Applications.Ursino1998.Ursino1998Model_res.mat", outputfolder + "/outputs/" + matrixoutput)
+
+    # 6. MOVE RESULT FILE
+    output_name = "Ursino1998Model"
+    if LVAD: output_name += "_VAD2"
+    matrixoutput = output_name + "_output_" + suffix + ".mat"
+    q("shutil.move: {}_res.mat -> ".format(model_name) + outputfolder + "/outputs/" + matrixoutput)
+    shutil.move(model_name + "_res.mat", outputfolder + "/outputs/" + matrixoutput)
 
