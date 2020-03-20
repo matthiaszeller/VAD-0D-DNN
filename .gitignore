@@ -9,3 +9,6 @@
 # Python
 *.pyc
 *__pycache__
+
+#
+*.iml

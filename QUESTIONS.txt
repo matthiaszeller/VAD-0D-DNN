@@ -4,11 +4,24 @@
 
 
 * RPM in simulations ? Guess it's not varying... which value should I take ? 5000 ? A value for which the aortic valve still opens ? 
+	====> Let the aortic valve open, but take 4000 since no pulsatility when RPM=5000 under SHF conditions
 
 
-* En fait j'ai besoin de rien changer par rapport à ModelParametersNH, tant que j'ai gradé justement ModelParametersNH ? Puisque pas de VAD, rien ne change ... ? 
+* En fait j'ai besoin de rien changer par rapport à ModelParametersNH, tant que j'ai gradé justement ModelParametersNH ? 
+	======> Yup
 
-* En fait, on mesure PAS, PAP au patient sans VAD, on applique au modèle sans VAD pour modéliser les flux, on applique au modèle avec VAD pour régler au mieux la machine ? Pourquoi on n'entraine pas le DNN à reconnaitre les paramètres avec le VAD ? 
+* En fait, on mesure PAS, PAP au patient sans VAD, on applique au modèle sans VAD pour modéliser les flux, on applique au modèle avec VAD pour régler au mieux la machine ? Pourquoi on n'entraine pas le DNN à reconnaitre les paramètres avec le VAD ?
+	=====> Entrainement DNN avec LVAD pour estimer récupération du ventricule
 
 
-* Temps simulation et temps de stabilisation sans regulation: pour le modèle Ursino1998Model (SANS VAD), si on enlève la régulation, on observe aussi un grand temps de stabilisation -> modifier qq trucs par rapport à ça ? 
+* Temps simulation et temps de stabilisation sans regulation: pour le modèle Ursino1998Model (SANS VAD), si on enlève la régulation, on observe aussi un grand temps de stabilisation ?
+	======> Dpendant des résultats de Jean, ok
+
+
+===================== 20.03.2020
+
+* Investigate the problem with the long stabilization time. Fourier coefficients are more scattered ?
+
+* Once simulations are generated, ways to check ? 
+
+* Currently: generate models with HM3, keep same parameters as Jean's ones (simulation time), simply change N° intervals

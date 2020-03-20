@@ -11,7 +11,7 @@ def q(msg):
 
 # Original modelica file
 #filepath="/media/matthias/Data/Programmation/git/VAD-0D-DNN/modelica/original/"
-filepath="/media/maousi/Data/Documents/Programmation/git/VAD-0D-DNN/modelica/original/"
+filepath="/media/maousi/Data/Documents/Programmation/git/vad-0d-dnn/modelica/original/"
 
 # Output folder path
 #outputfolder = None

@@ -93,15 +93,8 @@ def launchSimulation(filepath, listParameters, suffix, outputfolder):
     run("loadModel(Modelica)")
     run("loadFile(\"" + outputfolder + "/models/" + outputfile + "\")")
     run("instantiateModel(Mathcard.Applications.Ursino1998.Ursino1998Model)")
-    #omc.sendExpression("loadModel(Modelica)")
-    #omc.sendExpression("loadFile(\"" + outputfolder + "/models/" + outputfile + "\")")
-    #omc.sendExpression("instantiateModel(Mathcard.Applications.Ursino1998.Ursino1998Model)")
     matrixoutput = "Ursino1998Model_output" "_" + suffix + ".mat"
     start = timer()
-    #run("simulate(Mathcard.Applications.Ursino1998.Ursino1998Model, \
-    #resultFile=\"Mathcard.Applications.Ursino1998.Ursino1998Model_res.mat\", \
-    #stopTime=20.0, numberOfIntervals=500,\
-    #simflags=\"-emit_protected\", outputFormat=\"mat\")")
     run("simulate(Mathcard.Applications.Ursino1998.Ursino1998Model, \
     stopTime=20.0, numberOfIntervals=500, \
     simflags=\"-emit_protected\", outputFormat=\"mat\")")
