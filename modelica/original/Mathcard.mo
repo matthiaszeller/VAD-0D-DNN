@@ -954,7 +954,7 @@ Connector with one input signal of type Real.
         parameter Real Param_AutoregulationCenter_fevinf = 6.3;
         parameter Real Param_AutoregulationCenter_fcs0 = 25;
         parameter Real Param_AutoregulationCenter_kev = 7.06;
-        parameter Real Param_LVAD_RPM(unit = "RPM") = 8000;
+        parameter Real Param_LVAD_RPM(unit = "RPM") = 4000;
       end ModelParametersNH;
 
       model ModelParametersSHF_HTAP
@@ -1187,7 +1187,7 @@ Connector with one input signal of type Real.
         model Ursino1998Model_VAD2 "HMIII VAD model"
           // EXTEND THE SUPERCLASS
           // CHOOSE THE HEART FAILURE LEVEL (MHF / SHF)
-          extends HMIII.ModelParametersMHF;
+          extends Mathcard.Applications.Ursino1998.ModelParametersNH;
           // IMPORT MATHCARD LIBRARY
           import Mathcard.Library.*;
           // ============================
