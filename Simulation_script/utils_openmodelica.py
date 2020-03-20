@@ -75,19 +75,38 @@ def prepareOutputFolder(outputfolder):
     except Exception:
         print("<ERROR> Directory " + outputfolder + " exists!")
     return False
-    
+
+
 def launchSimulation(filepath, listParameters, suffix, outputfolder):
+    # Store the output of the commands
+    env = {}
+
+    def run(cmd):
+        q("<RUNNING> " + cmd)
+        env[cmd] = omc.sendExpression(cmd)
+        # Print the output, except for instanciateModel (too verbose)
+        if not "instantiateModel" in cmd:
+            q(str(env[cmd]))
+
     outputfile = "Mathcard" + "_" + suffix + ".mo"
     changeValueInFile(filepath, listParameters, outputfile, outputfolder)
-    omc.sendExpression("loadModel(Modelica)")
-    omc.sendExpression("loadFile(\"" + outputfolder + "/models/" + outputfile + "\")")
-    omc.sendExpression("instantiateModel(Mathcard.Applications.Ursino1998.Ursino1998Model)")
+    run("loadModel(Modelica)")
+    run("loadFile(\"" + outputfolder + "/models/" + outputfile + "\")")
+    run("instantiateModel(Mathcard.Applications.Ursino1998.Ursino1998Model)")
+    #omc.sendExpression("loadModel(Modelica)")
+    #omc.sendExpression("loadFile(\"" + outputfolder + "/models/" + outputfile + "\")")
+    #omc.sendExpression("instantiateModel(Mathcard.Applications.Ursino1998.Ursino1998Model)")
     matrixoutput = "Ursino1998Model_output" "_" + suffix + ".mat"
     start = timer()
-    omc.sendExpression("simulate(Mathcard.Applications.Ursino1998.Ursino1998Model, \
+    #run("simulate(Mathcard.Applications.Ursino1998.Ursino1998Model, \
+    #resultFile=\"Mathcard.Applications.Ursino1998.Ursino1998Model_res.mat\", \
+    #stopTime=20.0, numberOfIntervals=500,\
+    #simflags=\"-emit_protected\", outputFormat=\"mat\")")
+    run("simulate(Mathcard.Applications.Ursino1998.Ursino1998Model, \
     stopTime=20.0, numberOfIntervals=500, \
     simflags=\"-emit_protected\", outputFormat=\"mat\")")
     end = timer()
     print("Simulation time [{}]\t{:.4}".format(suffix, end - start))
-    #shutil.move("Mathcard.Applications.Ursino1998.Ursino1998Model_res.mat", outputfolder + "/outputs/" + matrixoutput)
+    q("shutil.move: Mathcard.Applications.Ursino1998.Ursino1998Model_res.mat -> " + outputfolder + "/outputs/" + matrixoutput)
+    shutil.move("Mathcard.Applications.Ursino1998.Ursino1998Model_res.mat", outputfolder + "/outputs/" + matrixoutput)
 
