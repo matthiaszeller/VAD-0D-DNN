@@ -3,6 +3,9 @@
 # SETUP FILE
 # Configure file paths
 
+# SIMULATION WITH/WITHOUT LVAD
+SIMULATION_LVAD = True
+
 # Verbose and debug mode
 DEBUG_MODE = True
 def q(msg):

@@ -56,10 +56,7 @@ def changeValueInFile(filepath, listParameter, outputfile, outputfolder):
     filehandlerout.close()
 
     q("shutil.move :" + filepath + outputfile + "->" + outputfolder + "/models/" + outputfile)
-    #os.rename(filepath + "/" + outputfile, outputfolder + "/models/" + outputfile)
     shutil.move(filepath + outputfile, outputfolder + "/models/" + outputfile)
-    #shutil.copy(filepath + "/" + outputfile, outputfolder + "/models/" + outputfile)
-    #shutil.rmtree(filepath + "/" + outputfile)
 
     
 def prepareOutputFolder(outputfolder):

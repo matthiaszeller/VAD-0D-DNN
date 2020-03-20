@@ -27,7 +27,7 @@ param4 = uo.Parameter("Param_LeftVentricle_kE", 0.011, 0.014)
 
 listParameters = [param1, param2, param3, param4]
 
-numberofsamples = 1
+numberofsamples = 10000
 
 outputCreated = uo.prepareOutputFolder(outputfolder)
 #if not outputCreated:
@@ -36,4 +36,4 @@ outputCreated = uo.prepareOutputFolder(outputfolder)
 
 for indexsample in range(0,numberofsamples):
     suffix = str(indexsample)
-    uo.launchSimulation(filepath, listParameters, suffix, outputfolder)
+    uo.launchSimulation(filepath, listParameters, suffix, outputfolder, SIMULATION_LVAD)
