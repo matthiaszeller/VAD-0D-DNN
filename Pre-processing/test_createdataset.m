@@ -1,9 +1,15 @@
 clear all
 clc
 
+% =========================== SETUP
+setup
+
+% =========================== PROCESS
+
 %Modify both paths for X and Y!
 
-pathmats = '/Volumes/BONNEMAIN/2019_12_24/outputs/';
+%pathmats = '/Volumes/BONNEMAIN/2019_12_24/outputs/';
+
 
 % create input matrix
 inputvariablesname = {'SystemicArteries.PC'; ...
@@ -17,8 +23,10 @@ dt = 0.04;
 files = dir([pathmats,'*.mat']);
 nfiles = size(files,1);
 count = 1;
+filetrace = [];
 for file = files'
-    results = load([pathmats,file.name]); 
+  filetrace = [filetrace, file.name];
+    results = load([pathmats,file.name]);
     for i = 1:nvariables
         [signal,t]=extractresults(inputvariablesname{i},results);
         [signal,t]=timerange(signal,t,tsub_min,tsub_max);
@@ -37,31 +45,3 @@ for file = files'
 end
 
 save('X.mat','X')
-
-% create output matrix
-pathmos = '/Volumes/BONNEMAIN/2019_12_24/models/';
-model = 'ModelParametersNH';
-
-listparameters = {'Param_LeftVentricle_Emax0'; ...
-                  'Param_LeftVentricle_EmaxRef0'; ...
-                  'Param_LeftVentricle_AGain_Emax'; ...
-                  'Param_LeftVentricle_kE'};
-
-files = dir([pathmos,'*.mo']);
-nfiles = size(files,1);
-Y = [];
-count = 1;
-for file = files'
-    params = getparametersfrommodel([pathmos,file.name],listparameters,model);
-    if (count == 1)
-        n = length(params);
-        Y = zeros(nfiles,n);
-    end
-    
-    Y(count,:) = params;
-  
-    disp(['Parsing output file ', num2str(count),'/',num2str(nfiles)]);
-    count = count + 1;
-end
-
-save('Y.mat','Y')

@@ -3,6 +3,8 @@
 # SETUP FILE
 # Configure file paths
 
+numberofsamples = 10000
+
 # SIMULATION WITH/WITHOUT LVAD
 SIMULATION_LVAD = True
 
@@ -13,7 +15,7 @@ def q(msg):
         print("<Debug msg> " + msg)
 
 # Original modelica file
-filepath="/media/maousi/Data/Documents/Programmation/git/vad-0d-dnn/modelica/original/"
+file_path="/media/maousi/Data/Documents/Programmation/git/vad-0d-dnn/modelica/original/Mathcard.mo"
 
 # Output folder path
-outputfolder="/media/maousi/Data/tmp/OM_Simulation"
+output_folder="/media/maousi/Data/tmp/OM_SimulationNew"

@@ -5,6 +5,7 @@ output = fgets(fid);
 nparameters = size(listparameters,1);
 searchforparams = -1;
 params = zeros(nparameters,1);
+
 while output ~= -1
     if contains(output,['model ',model])
         searchforparams = 0;
