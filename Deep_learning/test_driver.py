@@ -1,3 +1,12 @@
+
+# ================== ABOUT ====================
+# Author: Jean Bonnemain
+# Modifications: Matthias Zeller
+
+# Information: run the script with '-h' or help to print informations !
+
+# ================= IMPORTS ===================
+
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 # TensorFlow and tf.keras
@@ -11,38 +20,29 @@ import matplotlib.pyplot as plt
 import scipy
 import scipy.io as sio
 
-import sys 
-sys.path.insert(1, '../Simulation_script/')
+import sys
+sys.path.insert(1, sys.path[0] + '/../Simulation_script/')
 
 import utils_openmodelica as uo
 import utils_deeplearning as udl
 import datetime
 import os
 
-print('Version Tensorflow:')
-print(tf.__version__)
+# ============ IMPLEMENTATION =============
 
-X = sio.loadmat('X.mat')['X']
-Y = sio.loadmat('Y.mat')['Y']
-# Select a subset of frequencies
-perccoef = 0.05
-ncoefficients = X.shape[1]
-nfrequencies  = X.shape[2]
-noutparams    = Y.shape[1]
-nsamples = X.shape[0]
+# One can run the script with arguments to run specific parts
+run_train, run_test, path = udl.manage_args(sys.argv)
 
-if (perccoef < 0.99999):
-    if nfrequencies%2==0:
-        aks=(nfrequencies+2)/2
-        bks=aks-2
-    else:
-        aks=(nfrequencies+1)/2
-        bks=aks-1
-    aks = int(aks)
-    selectedaks = int(np.floor(aks * perccoef))
-    indicestoselect = list(range(0,selectedaks)) + list(range(aks,aks+selectedaks-1))
-    X = np.take(X,indicestoselect,axis=2)
-    nfrequencies = X.shape[2]
+print('Tensorflow version:', tf.__version__)
+
+if run_train:
+    # PERCENTAGE OF COEFFICIENTS TO KEEP
+    perccoef = 0.05
+    # Launch training
+    udl.train_dnn(perccoef, files_path=path)
+
+print("\nExiting to keep control...")
+exit()
 
 
 # cut the input matrix (e.g. to keep only a subset of the frequencies)
@@ -119,7 +119,7 @@ perctest = 0.05
 perctrain = 1 - perctest
 percvalidation = 0.2
 samplestrain = int(np.floor(perctrain * nsamples))
-samplestest  = nsamples - samplestrain
+samplestest = nsamples - samplestrain
 
 Xtrain = X[0:samplestrain,:,:]
 Ytrain = Y[0:samplestrain,:]
