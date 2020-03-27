@@ -55,20 +55,17 @@ def changeValueInFile(filepath, listParameter, outputfile, outputfolder):
     q("shutil.move :" + filepath + outputfile + "->" + outputfolder + "/models/" + outputfile)
     shutil.move(filepath + outputfile, outputfolder + "/models/" + outputfile)
 
-    
 def prepareOutputFolder(outputfolder):
-    try:
-        q("1")
-        os.mkdir(outputfolder)
-        q("2")
-        #os.mkdir(outputfolder + '/models')
-        q("3")
-        os.mkdir(outputfolder + '/outputs')
-        q("prepareOutputFolder: models and outputs folders were created in"+ outputFolder)
-        return True
-    except Exception:
-        print("<ERROR> Directory " + outputfolder + " exists!")
-    return False
+    if os.path.exists(outputfolder):
+        return False
+
+    # Create main folder
+    os.mkdir(outputfolder)
+    # Create folder for output data
+    data_output = outputfolder + "/outputs/"
+    os.mkdir(data_output)
+    q("<INIT> Output folder: " + outputfolder)
+    return data_output
 
 def runcmd(omc, cmd, env):
     """Run openmodelica command with the OMCSessionZMQ instance passed as an argument"""
@@ -94,15 +91,23 @@ def runSimulation(N, param_lst, output_folder, file, LVAD):
     according to the parameters specified in param_lst.
     Note: we can run simulation without build by using ./exec_name -override=paramName=ParamValue"""
     # 1. Create folders
-    prepareOutputFolder(output_folder)
-    out = output_folder + "/outputs/"
+    try:
+        out = prepareOutputFolder(output_folder)
+    except Exception:
+        print("\n===================== FATAL ERROR =====================")
+        print("Could not create the folder '{}' for unknown reason".format(output_folder))
+    # Do not overwrite in existing folder ! Abort the program
+    if out == False:
+        print("\n===================== FATAL ERROR =====================")
+        print("The folder '{}' already exists".format(output_folder))
+        exit()
     # 2. Run OMC session
     omc = OMCSessionZMQ()
     # 3. Determine model name
     model_name = "Mathcard.Applications.Ursino1998.Ursino1998Model"
     if LVAD: model_name = "Mathcard.Applications.Ursino1998.HMIII.Ursino1998Model_VAD2"
     ###############################
-    # 4. Build the model
+    # 4. Build the model (done only once)
     # An executable will be created,
     env = {}
     runcmd(omc, "loadModel(Modelica)", env)
@@ -146,6 +151,7 @@ def runSimulation(N, param_lst, output_folder, file, LVAD):
 
 def writeParamData(data, output_folder):
     file_path = output_folder + "/" + "parameters.txt"
+    # Format the file content in a string
     cols = [name for name in data[0]]
     header = ','.join(['n'] + cols)
     txt = header
@@ -153,51 +159,6 @@ def writeParamData(data, output_folder):
         line = str(n)
         for col in cols: line += ","+str(values[col])
         txt += "\n" + line
-	
+	# Open the file and write
     with open(file_path, 'w') as f:
         f.write(txt)
-
-
-
-def launchSimulation(filepath, listParameters, suffix, outputfolder, LVAD=False):
-    # Store the output of the commands
-    env = {}
-
-    def run(cmd):
-        q("<RUNNING> " + cmd)
-        env[cmd] = omc.sendExpression(cmd)
-        # Print the output, except for instanciateModel (too verbose)
-        if not "instantiateModel" in cmd:
-            q(str(env[cmd]))
-
-    # 1. DETERMINE OUTPUT FILE
-    outputfile = "Mathcard" + "_" + suffix + ".mo"
-
-    # 2. CREATE NEW MODELICA FILE AND CHANGE PARAMS
-    changeValueInFile(filepath, listParameters, outputfile, outputfolder)
-
-    # 3. LOAD MODELS
-    model_name = "Mathcard.Applications.Ursino1998.Ursino1998Model"
-    if LVAD: model_name = "Mathcard.Applications.Ursino1998.HMIII.Ursino1998Model_VAD2"
-
-    run("loadModel(Modelica)")
-    run("loadFile(\"" + outputfolder + "/models/" + outputfile + "\")")
-    run("instantiateModel({})".format(model_name))
-
-    # 4. RUN THE SIMULATION
-    start = timer()
-    run("simulate({}, \
-    stopTime=20.0, numberOfIntervals=500, \
-    simflags=\"-emit_protected\", outputFormat=\"mat\")".format(model_name))
-    end = timer()
-
-    # 5. REPORT SIMULATION TIME
-    print("Simulation time [{}]\t{:.4}".format(suffix, end - start))
-
-    # 6. MOVE RESULT FILE
-    output_name = "Ursino1998Model"
-    if LVAD: output_name += "_VAD2"
-    matrixoutput = output_name + "_output_" + suffix + ".mat"
-    q("shutil.move: {}_res.mat -> ".format(model_name) + outputfolder + "/outputs/" + matrixoutput)
-    shutil.move(model_name + "_res.mat", outputfolder + "/outputs/" + matrixoutput)
-
