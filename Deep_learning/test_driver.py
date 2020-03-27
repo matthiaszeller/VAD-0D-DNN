@@ -1,3 +1,12 @@
+
+# ================== ABOUT ====================
+# Author: Jean Bonnemain
+# Modifications: Matthias Zeller
+
+# Information: run the script with '-h' or help to print informations !
+
+# ================= IMPORTS ===================
+
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 # TensorFlow and tf.keras
@@ -11,179 +20,78 @@ import matplotlib.pyplot as plt
 import scipy
 import scipy.io as sio
 
-import sys 
-sys.path.insert(1, '../Simulation_script/')
+import sys
+sys.path.insert(1, sys.path[0] + '/../Simulation_script/')
 
 import utils_openmodelica as uo
 import utils_deeplearning as udl
 import datetime
 import os
 
-print('Version Tensorflow:')
-print(tf.__version__)
+# ============== PARAMETERS ===============
 
-X = sio.loadmat('X.mat')['X']
-Y = sio.loadmat('Y.mat')['Y']
-# Select a subset of frequencies
+# PERCENTAGE OF COEFFICIENTS TO KEEP
 perccoef = 0.05
-ncoefficients = X.shape[1]
-nfrequencies  = X.shape[2]
-noutparams    = Y.shape[1]
-nsamples = X.shape[0]
 
-if (perccoef < 0.99999):
-    if nfrequencies%2==0:
-        aks=(nfrequencies+2)/2
-        bks=aks-2
-    else:
-        aks=(nfrequencies+1)/2
-        bks=aks-1
-    aks = int(aks)
-    selectedaks = int(np.floor(aks * perccoef))
-    indicestoselect = list(range(0,selectedaks)) + list(range(aks,aks+selectedaks-1))
-    X = np.take(X,indicestoselect,axis=2)
-    nfrequencies = X.shape[2]
+# ============ IMPLEMENTATION =============
 
+# One can run the script with arguments to run specific parts
+run_train, run_test, path = udl.manage_args(sys.argv)
 
-# cut the input matrix (e.g. to keep only a subset of the frequencies)
-# freqmax = 100
-# X = X[:,:,0:freqmax]
+print('Tensorflow version:', tf.__version__)
 
-# for simplicity this is specific to a three dimensional tensor in which the
-# the second component differentiates between aks and bks
-def normalizeinputmat(mat,newmins,newmaxs):
-#    # compute min and max values of aks
-#    mataks = mat[:,0,:]
-#    aksmin = mataks.min()
-#    aksmax = mataks.max()
-#
-#    # compute min and max values of bks
-#    matbks = mat[:,1,:]
-#    bksmin = matbks.min()
-#    bksmax = matbks.max()
-#
-#    # normalize such that aks and bks are in range (newmin,newmax)
-#    mat[:,0,:] = newmin + (newmax - newmin) * (mataks - aksmin) / (aksmax - aksmin)
-#    mat[:,1,:] = newmin + (newmax - newmin) * (matbks - bksmin) / (bksmax - bksmin)
-    shapes = mat.shape
-    
-    coefmins = np.full(newmins.shape,0.0)
-    coefmaxs = np.full(newmaxs.shape,0.0)
+# If we only want to train the DNN, we also want to store the test data
+train_only = True if run_train and not run_test else False
+# If we only want to test the DNN, we have to load the the test data
+test_only  = True if run_test and not run_train else False
 
-    for coefind in range(0,shapes[1]):
-        for freq in range(0,shapes[2]):
-            coef = mat[:,coefind,freq]
-            coefmin = coef.min()
-            coefmax = coef.max()
-            coefmins[coefind,freq] = coefmin
-            coefmaxs[coefind,freq] = coefmax
-            if (abs(coefmax - coefmin) > 1e-15):#In case of normalization by column (bk removed in MATLAB)
-                mat[:,coefind,freq] = newmins[coefind,freq] + (newmaxs[coefind,freq] - newmins[coefind,freq]) * (coef - coefmin) / (coefmax - coefmin)
+# Training mode
+if run_train:
+    print("\n========== TRAINING")
+    # Launch DNN training
+    res = udl.train_dnn(perccoef, files_path=path, save_test_data=train_only)
 
-    return mat, coefmins, coefmaxs
+    # If we train & test, load data from memory rather than from files
+    if not train_only:
+        normdata = res[0]
+        (Xtest, Ytest) = res[1]
+        model = res[2]
+        del res
 
-# different normalization: we normalize wrt to the min and max values of each
-# parameter at different samples
-def normalizeoutputmat(mat,newmins,newmaxs):
-    shapes = mat.shape
-    parammins = np.full(newmins.shape,0.0)
-    parammaxs = np.full(newmins.shape,0.0)
-    
-    for i in range(0,shapes[1]):
-        param = mat[:,i]
-        parammin = param.min()
-        parammax = param.max()
-        parammins[i] = parammin
-        parammaxs[i] = parammax
-        mat[:,i] = newmins[i] + (newmaxs[i] - newmins[i]) * (param - parammin) / (parammax - parammin)
+# Testing mode
+if run_test:
+    # If run-only mode, load data from files
+    if test_only:
+        try:
+            Xtest = np.load('Xtest.npy')
+            Ytest = np.load('Ytest.npy')
+        except FileNotFoundError:
+            print("\nERROR ! Xtest or Ytest not found, you probably did not run the training mode before")
+            exit()
 
-    return mat, parammins, parammaxs
+        normdata = {
+            'coefmins':None, 'coefmaxs':None,
+            'parammins':None, 'parammaxs':None
+        }
+        for name in normdata:
+            normdata[name] = np.load(name + '.npy')
+
+        model = keras.models.load_model("DNN_0D_Model.h5")
+        print("Data were loaded from files...")
+        for name,val in normdata.items():
+            print(name, '=', val)
+        print("Xtest.shape =", Xtest.shape)
+        print("Ytest.shape =", Ytest.shape)
 
 
-newmins = np.full([ncoefficients,nfrequencies],0.0)
-newmaxs = np.full([ncoefficients,nfrequencies],1.0)
+    print("\n========== TESTING")
 
-X,coefmins,coefmaxs = udl.normalizeinputmatDL(X,newmins,newmaxs)
-np.save("coefmins",coefmins)
-np.save("coefmaxs",coefmaxs)
-
-newmins = np.full([noutparams],0.0)
-newmaxs = np.full([noutparams],1.0)
-Y,parammins,parammaxs = udl.normalizeoutputmatDL(Y,newmins,newmaxs)
-np.save("parammins",parammins)
-np.save("parammaxs",parammaxs)
+    # Launc DNN testing
+    udl.test_dnn(model, Xtest, Ytest, normdata)
 
 
-# test and validation
-perctest = 0.05
-perctrain = 1 - perctest
-percvalidation = 0.2
-samplestrain = int(np.floor(perctrain * nsamples))
-samplestest  = nsamples - samplestrain
-
-Xtrain = X[0:samplestrain,:,:]
-Ytrain = Y[0:samplestrain,:]
-Xtest = X[samplestrain+1:,:,:]
-Ytest = Y[samplestrain+1:,:]
-
-model = keras.Sequential([
-    keras.layers.Flatten(input_shape=(ncoefficients, nfrequencies)),
-    keras.layers.Dense(32, activation='relu'),
-    keras.layers.Dense(32, activation='relu'),
-    keras.layers.Dense(32, activation='relu'),
-    keras.layers.Dense(32, activation='relu'),
-    keras.layers.Dense(32, activation='relu'),
-    keras.layers.Dense(noutparams, activation='sigmoid')
-])
-
-model.compile(optimizer='adam',
-              loss='mse',
-              metrics=['mae'])
-
-history = model.fit(Xtrain, Ytrain, epochs=1000, validation_split=percvalidation)
-
-plt.semilogy(history.history['loss'], label = 'loss')
-plt.semilogy(history.history['val_loss'], label = 'val_loss')
-plt.legend()
-plt.savefig('Losses.eps')
-
-#Save the model in the .h5 format
-model.save('DNN_0D_Model.h5')
-
-Ypred = model.predict(Xtest)
-
-Xtest, _, _ = normalizeinputmat(Xtest, coefmins, coefmaxs)
-Ypred, _, _ = normalizeoutputmat(Ypred, parammins, parammaxs) #Obtain real values, non normalized
-Ytest, _, _ = normalizeoutputmat(Ytest, parammins, parammaxs)
-print(Ypred[0,:])
-print(Xtest[0,0,:]) #return frequency for systemic arteries
-#scipy.io.savemat('Ypred.mat',mdict={'Ypred': Ypred})
-#scipy.io.savemat('Ypred.mat',mdict={'Xtest': Xtest})
-
-
-fig, axs = plt.subplots(2, 2)
-axs[0,0].scatter(Ytest[:,0],Ypred[:,0])
-axs[0,0].set_title('Left Ventricle Emax0')
-axs[0,0].set_xlabel('real parameter')
-axs[0,0].set_ylabel('predicted parameter')
-axs[0,1].scatter(Ytest[:,1],Ypred[:,1])
-axs[0,1].set_title('Left Ventricle EmaxRef0')
-axs[0,1].set_xlabel('real parameter')
-axs[0,1].set_ylabel('predicted parameter')
-axs[1,0].scatter(Ytest[:,2],Ypred[:,2])
-axs[1,0].set_title('Left Ventricle AGain_Emax')
-axs[1,0].set_xlabel('real parameter')
-axs[1,0].set_ylabel('predicted parameter')
-axs[1,1].scatter(Ytest[:,3],Ypred[:,3])
-axs[1,1].set_title('Left Ventricle kE')
-axs[1,1].set_xlabel('real parameter')
-axs[1,1].set_ylabel('predicted parameter')
-axs[1,1].set_xlim(parammins[3],parammaxs[3])
-axs[1,1].set_ylim(parammins[3],parammaxs[3])
-fig.set_figheight(10)
-fig.set_figwidth(15)
-plt.savefig('DNN_Performance.eps')
-#%%
+print("\nExiting to keep control...")
+exit()
 
 filepath="/Users/jean.bonnemain/Documents/Code/0d_model/Modelica_Code/0D_Original/"
 today = datetime.datetime.now()
