@@ -182,9 +182,10 @@ def test_dnn(model, Xtest, Ytest, normdata):
     # ======== GENERATE AND SAVE FIGURE OF DNN PERFORMANCE
     create_and_save_performance_fig(Ytest, Ypred, normdata)
 
-    # ========
+    # ======== SIMULATE WITH MODELICA
 
-def train_dnn(perccoef, files_path='', save_test_data=False):
+
+def train_dnn(perccoef, files_path='', save_test_data=True):
     # ======== DATA LOADING
     X = sio.loadmat(files_path+'X.mat')['X']
     Y = sio.loadmat(files_path+'Y.mat')['Y']
@@ -212,6 +213,10 @@ def train_dnn(perccoef, files_path='', save_test_data=False):
         X = np.take(X, indicestoselect, axis=2)
         nfrequencies = X.shape[2]
         print("Reduced amount of input, X is now " + str(X.shape))
+
+    # cut the input matrix (e.g. to keep only a subset of the frequencies)
+    # freqmax = 100
+    # X = X[:,:,0:freqmax]
 
     # ======== NORMALIZATION
     newmins = np.full([ncoefficients, nfrequencies], 0.0)

@@ -89,10 +89,6 @@ if run_test:
     # Launc DNN testing
     udl.test_dnn(model, Xtest, Ytest, normdata)
 
-# cut the input matrix (e.g. to keep only a subset of the frequencies)
-# freqmax = 100
-# X = X[:,:,0:freqmax]
-
 
 print("\nExiting to keep control...")
 exit()
