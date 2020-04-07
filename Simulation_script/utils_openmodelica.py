@@ -91,15 +91,16 @@ def runSimulation(N, param_lst, output_folder, file, LVAD):
     according to the parameters specified in param_lst.
     Note: we can run simulation without build by using ./exec_name -override=paramName=ParamValue"""
     # 1. Create folders
+    output_folder_test_dnn = output_folder + '/testdnn'
     try:
-        out = prepareOutputFolder(output_folder)
+        out = prepareOutputFolder(output_folder_test_dnn)
     except Exception:
         print("\n===================== FATAL ERROR =====================")
-        print("Could not create the folder '{}' for unknown reason".format(output_folder))
+        print("Could not create the folder '{}' for unknown reason".format(output_folder_test_dnn))
     # Do not overwrite in existing folder ! Abort the program
     if out == False:
         print("\n===================== FATAL ERROR =====================")
-        print("The folder '{}' already exists".format(output_folder))
+        print("The folder '{}' already exists".format(output_folder_test_dnn))
         exit()
     # 2. Run OMC session
     omc = OMCSessionZMQ()
@@ -162,3 +163,67 @@ def writeParamData(data, output_folder):
 	# Open the file and write
     with open(file_path, 'w') as f:
         f.write(txt)
+
+def runTestSimulation(Ytest, Ytest_pred, param_lst, output_dnn_test, modelica_file_path):
+    """Given the predicted responses of the neural network and the exact ones (those used to generate input data for DNN)
+    run simulations to compare hemodynamics between the two."""
+    # ======== PREPARE
+    try:
+        out = prepareOutputFolder(output_dnn_test)
+    except Exception:
+        print("\n===================== FATAL ERROR =====================")
+        print("Could not create the folder '{}' for unknown reason".format(output_dnn_test))
+    # Do not overwrite in existing folder ! Abort the program
+    if out == False:
+        print("\n===================== FATAL ERROR =====================")
+        print("The folder '{}' already exists".format(output_dnn_test))
+        exit()
+
+    # ======== PREPARE SESSION
+    omc = OMCSessionZMQ()
+    model_name = "Mathcard.Applications.Ursino1998.Ursino1998Model"
+    if SIMULATION_LVAD: model_name = "Mathcard.Applications.Ursino1998.HMIII.Ursino1998Model_VAD2"
+
+    # ======== LOAD FILES
+    env = {}
+    runcmd(omc, "loadModel(Modelica)", env)
+    runcmd(omc, "loadFile(\"{}\")".format(modelica_file_path), env)
+    runcmd(omc, "instantiateModel({})".format(model_name), env)
+    runcmd(omc, "simulate({}, stopTime=20.0, numberOfIntervals=500, \
+    simflags=\"-emit_protected\", outputFormat=\"mat\")".format(model_name), env)
+
+    # ======== PREPARE SIMULATION
+    override_cmd_template = [p.name+"={}" for p in param_lst]
+    override_cmd_template = ','.join(override_cmd_template)
+    # Prepare output file format
+    # Suffix (after simulation number) will be 'predicted' or 'exact'
+    output_file_template = out + model_name.split('.')[-1] + "_output_{}_{}.mat"
+
+    # ========= SIMULATION LOOP
+    for i in range(Ytest.shape[0]):
+        exact_params = Ytest[i, :]
+        pred_params = Ytest_pred[i, :]
+
+        # == Launch simulation with exact parameters
+        override_cmd = override_cmd_template.format(*exact_params)
+        output_file = output_file_template.format(i, 'exact')
+        # Simulate without build
+        cmd = "./" + model_name + " -override="+override_cmd \
+                   + " -r="+output_file + " -emit_protected"
+        q("<RUNNING> " + cmd)
+        start = timer()
+        res = os.system(cmd)
+        end = timer()
+        q("Simulation time (n={}, exact): {:.5}".format(i, end-start))
+
+        # == Launch simulation with predicted parameters
+        override_cmd = override_cmd_template.format(*pred_params)
+        output_file = output_file_template.format(i, 'predicted')
+        # Simulate without build
+        cmd = "./" + model_name + " -override="+override_cmd \
+                   + " -r="+output_file + " -emit_protected"
+        q("<RUNNING> " + cmd)
+        start = timer()
+        res = os.system(cmd)
+        end = timer()
+        q("Simulation time (n={}, precited): {:.5}".format(i, end-start))

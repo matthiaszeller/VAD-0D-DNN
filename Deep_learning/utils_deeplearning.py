@@ -11,6 +11,7 @@ import scipy.io as sio
 import os.path
 from tensorflow import keras
 import matplotlib.pyplot as plt
+import utils_openmodelica as uo
 
 # Normalizes output parameters. If we want to use max and min parameters from 
 # the trained model, just give them as input.
@@ -164,7 +165,9 @@ def create_and_save_performance_fig(Ytest, Ypred, normdata):
     fig.set_figwidth(15)
     plt.savefig('DNN_Performance.eps')
 
-def test_dnn(model, Xtest, Ytest, normdata):
+def test_dnn(model, Xtest, Ytest, normdata, param_lst, output_dnn_test, modelica_file_path):
+    # Xtest, Ytest are normalizedf
+
     # ======== PREDICTION
     Ypred = model.predict(Xtest)
 
@@ -183,7 +186,8 @@ def test_dnn(model, Xtest, Ytest, normdata):
     create_and_save_performance_fig(Ytest, Ypred, normdata)
 
     # ======== SIMULATE WITH MODELICA
-
+    uo.runTestSimulation(Ytest=Ytest, Ytest_pred=Ypred, param_lst=param_lst,
+                         output_dnn_test=output_dnn_test, modelica_file_path=modelica_file_path)
 
 def train_dnn(perccoef, files_path='', save_test_data=True):
     # ======== DATA LOADING
@@ -274,8 +278,8 @@ def train_dnn(perccoef, files_path='', save_test_data=True):
 
     # If train-only mode, save X and Y into files and return nothing (training and testing sets)
     if save_test_data:
-        np.save('Xtest', Xtest)
-        np.save('Ytest', Ytest)
+        np.save('Xtest_norm', Xtest)
+        np.save('Ytest_norm', Ytest)
 
     #  Otherwise, do not save data but return them from memory
     return (normdata, (Xtest, Ytest), model)
@@ -305,15 +309,18 @@ def manage_args(args):
     if '-h' in args or 'help' in args:
         print("\nThe following commands can be provided (all are optional, if none is provided -> test & train by default):")
         #print("* 'help' or '-h'")
-        print("* 'train'\t\tTrain the DNN with X.mat, Y.mat.\n\t\t\tCreates files 1-6.")
-        print("* 'test'\t\tTest the DNN by loading files X, X, X")
+        print("* 'train'\t\tTrain the DNN with X.mat, Y.mat.\n\t\t\tCreates files 1-8.")
+        print("* 'test'\t\tTest the DNN by loading files 1-4 and 6-8")
         print("* '--path <folder>'\tSpecify the directory of X.mat and Y.mat")
         print("\nFiles description:")
         print("1. coefmins\tminimums of the original data (input) before normalization")
         print("2. coefmaxs\tmaximums of the original data (input) before normalization")
         print("3. parammins\tminimums of the original data (output) before normalization")
         print("4. parammaxs\tmaximums of the original data (output) before normalization")
-        print("5. coefmins")
+        print("5. Losses.eps\tfigure showing the MSE of the training and validation sets")
+        print("6. DNN_0D_Model.h5\tDNN model")
+        print("7. Xtest.npy\tInput test data")
+        print("8. Ytest.npy\tOutput test data")
         exit()
     # Train only
     if 'train' in args:

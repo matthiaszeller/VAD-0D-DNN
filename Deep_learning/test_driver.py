@@ -23,8 +23,9 @@ import scipy.io as sio
 import sys
 sys.path.insert(1, sys.path[0] + '/../Simulation_script/')
 
-import utils_openmodelica as uo
 import utils_deeplearning as udl
+import utils_openmodelica as uo
+from setup import *
 import datetime
 import os
 
@@ -40,16 +41,16 @@ run_train, run_test, path = udl.manage_args(sys.argv)
 
 print('Tensorflow version:', tf.__version__)
 
-# If we only want to train the DNN, we also want to store the test data
-train_only = True if run_train and not run_test else False
-# If we only want to test the DNN, we have to load the the test data
+# If we only want to test the DNN, we have to load the test data
 test_only  = True if run_test and not run_train else False
+# If we only want to train the DNN, we want to load data from memory rather than from files
+train_only = True if run_train and not run_test else False
 
 # Training mode
 if run_train:
     print("\n========== TRAINING")
     # Launch DNN training
-    res = udl.train_dnn(perccoef, files_path=path, save_test_data=train_only)
+    res = udl.train_dnn(perccoef, files_path=path, save_test_data=True)
 
     # If we train & test, load data from memory rather than from files
     if not train_only:
@@ -62,11 +63,13 @@ if run_train:
 if run_test:
     # If run-only mode, load data from files
     if test_only:
+        print("\n========== LOADING")
         try:
-            Xtest = np.load('Xtest.npy')
-            Ytest = np.load('Ytest.npy')
+            Xtest = np.load(dnn_folder + '/Xtest_norm.npy')
+            Ytest = np.load(dnn_folder + '/Ytest_norm.npy')
         except FileNotFoundError:
-            print("\nERROR ! Xtest or Ytest not found, you probably did not run the training mode before")
+            print("\nERROR ! Xtest_norm and/or Ytest_norm not found, you probably \
+            did not run the training mode before or 'dnn_folder' in Simulation_script/setup.py is wrong")
             exit()
 
         normdata = {
@@ -74,9 +77,9 @@ if run_test:
             'parammins':None, 'parammaxs':None
         }
         for name in normdata:
-            normdata[name] = np.load(name + '.npy')
+            normdata[name] = np.load(dnn_folder + '/' + name + '.npy')
 
-        model = keras.models.load_model("DNN_0D_Model.h5")
+        model = keras.models.load_model(dnn_folder + "/DNN_0D_Model.h5")
         print("Data were loaded from files...")
         for name,val in normdata.items():
             print(name, '=', val)
@@ -86,8 +89,21 @@ if run_test:
 
     print("\n========== TESTING")
 
-    # Launc DNN testing
-    udl.test_dnn(model, Xtest, Ytest, normdata)
+    # Parameters of the simulation
+    # WARNING: the order of the parameters defined below must be consistent with
+    # the order defined in the simulation script (launch_openmodelica.py)
+    param1 = uo.Parameter('Param_LeftVentricle_Emax0')
+    param2 = uo.Parameter('Param_LeftVentricle_EmaxRef0')
+    param3 = uo.Parameter('Param_LeftVentricle_AGain_Emax')
+    param4 = uo.Parameter('Param_LeftVentricle_kE')
+    param_lst = [param1, param2, param3, param4]
+
+    # Setup the path for the model outputs
+    today = datetime.datetime.now()
+    output_folder_DNN_test += '_' + today.strftime("%Y") + '_' + today.strftime("%m") + '_' + today.strftime("%d")
+
+    # Launch DNN testing
+    udl.test_dnn(model, Xtest, Ytest, normdata, param_lst, output_folder_DNN_test, file_path)
 
 
 print("\nExiting to keep control...")
