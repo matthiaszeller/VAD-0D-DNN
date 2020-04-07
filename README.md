@@ -64,7 +64,10 @@ to estimate parameter values that reflect left ventricular recovery.
     main file content moved in [Deep_learning/utils_deeplearning.py](Deep_learning/utils_deeplearning.py).
     * [Deep_learning/utils_deeplearning.py](Deep_learning/utils_deeplearning.py): new functions:
         * `train_dnn`: all the code related to the DNN training was moved here
+        * `test_dnn`: all the code related to the DNN testing was moved here
         * `manage_args` to process arguments of [Deep_learning/test_driver.py](Deep_learning/test_driver.py)
+    * [Simulation_script/utils_openmodelica.py](Simulation_script/utils_openmodelica.py): 
+      new function `runTestSimulation` to generate the DNN test data
 
 ## Workflow
 
@@ -152,14 +155,30 @@ output folder *with* the date as a suffix (e.g. we refer to `output_path` instea
    Test the DNN and simulate with the predicted vs exact parameters with modelica:
    `python <path-to-project>/Deep_learning/test_driver.py test > log_test_dnn.txt &`
 
-1. Move `log_test_dnn.txt` to the `output_folder`.
-
-## Data
-
-#### Modelica
-
-* [Mathcard.mo](modelica/Mathcard.mo): modelica file containing the suitable libraries to model the cardiovascular system
-
-#### Notebooks
-
-1. [HQ curve HMIII](notebooks/N1-HQ-curve-HMIII.ipynb): fit quadratic polynomials of the pressure head-flow curves for different RPMs of the Heart Mate III
+1. Move `log_test_dnn.txt` to the `output_folder`. The `output_folder` now has the following structure:
+    ```
+    .
+    ├── dnn
+    │   ├── coefmaxs.npy
+    │   ├── coefmins.npy
+    │   ├── DNN_0D_Model.h5
+    │   ├── DNN_Performance.eps
+    │   ├── Losses.eps
+    │   ├── parammaxs.npy
+    │   ├── parammins.npy
+    │   ├── Xtest_norm.npy
+    │   └── Ytest_norm.npy
+    ├── dnn_test_2020_04_07/
+    │   └── outputs
+    │       ├── Ursino1998Model_VAD2_output_0_exact.mat
+    │       ├── Ursino1998Model_VAD2_output_0_predicted.mat
+    │       ├── ...
+    ├── log_generation.txt
+    ├── log_test_dnn.txt
+    ├── outputs/
+    │   ├── Ursino1998Model_VAD2_output_0.mat
+    │   ├── Ursino1998Model_VAD2_output_1000.mat
+    │   ├── ...
+    ├── X.mat
+    ├── Y.mat
+    ```
