@@ -113,19 +113,17 @@ output folder *with* the date as a suffix (e.g. we refer to `output_path` instea
 1. `cd` in the `output_folder` and create a directory that will contain data generated
    by the deep neural network, e.g. `mkdir dnn`. At this point, the `output_folder` has the following hierarchy:
 
-    ```
-    .
-    ├── dnn/
-    ├── log.txt
-    ├── outputs/
-    │   ├── Ursino1998Model_VAD2_output_0.mat
-    │   ├── Ursino1998Model_VAD2_output_1000.mat
-    │   ├── Ursino1998Model_VAD2_output_1001.mat
-    │   ├── ... # many other files
-    ├── parameters.txt
-    ├── X.mat
-    ├── Y.mat
-    ```
+		├── dnn/
+		├── log.txt
+		├── outputs/
+		│   ├── Ursino1998Model_VAD2_output_0.mat
+		│   ├── Ursino1998Model_VAD2_output_1000.mat
+		│   ├── Ursino1998Model_VAD2_output_1001.mat
+		│   ├── ... # many other files
+		├── parameters.txt
+		├── X.mat
+		├── Y.mat
+
 
 1. `cd` into the folder `dnn` and train the DNN: `python <path-to-project>/Deep_learning/test_driver.py train --path ../`.
     
@@ -134,17 +132,16 @@ output folder *with* the date as a suffix (e.g. we refer to `output_path` instea
     to setup a path, as specified in step 10.
     * The `--path` option is used to find the path to `X.mat` and `Y.mat` files
     * The content of `dnn` will be:
-        ```
-        dnn/
-        ├── coefmaxs.npy
-        ├── coefmins.npy
-        ├── DNN_0D_Model.h5
-        ├── Losses.eps
-        ├── parammaxs.npy
-        ├── parammins.npy
-        ├── Xtest_norm.npy
-        └── Ytest_norm.npy
-        ```
+    
+			dnn/
+			├── coefmaxs.npy
+			├── coefmins.npy
+			├── DNN_0D_Model.h5
+			├── Losses.eps
+			├── parammaxs.npy
+			├── parammins.npy
+			├── Xtest_norm.npy
+			└── Ytest_norm.npy
 
 1. Modify `dnn_folder` and `output_folder_DNN_test` in [Simulation_script/setup.py](Simulation_script/setup.py)
    so that they are consistent with the `output_path`. 
@@ -156,29 +153,28 @@ output folder *with* the date as a suffix (e.g. we refer to `output_path` instea
    `python <path-to-project>/Deep_learning/test_driver.py test > log_test_dnn.txt &`
 
 1. Move `log_test_dnn.txt` to the `output_folder`. The `output_folder` now has the following structure:
-    ```
-    .
-    ├── dnn
-    │   ├── coefmaxs.npy
-    │   ├── coefmins.npy
-    │   ├── DNN_0D_Model.h5
-    │   ├── DNN_Performance.eps
-    │   ├── Losses.eps
-    │   ├── parammaxs.npy
-    │   ├── parammins.npy
-    │   ├── Xtest_norm.npy
-    │   └── Ytest_norm.npy
-    ├── dnn_test_2020_04_07/
-    │   └── outputs
-    │       ├── Ursino1998Model_VAD2_output_0_exact.mat
-    │       ├── Ursino1998Model_VAD2_output_0_predicted.mat
-    │       ├── ...
-    ├── log_generation.txt
-    ├── log_test_dnn.txt
-    ├── outputs/
-    │   ├── Ursino1998Model_VAD2_output_0.mat
-    │   ├── Ursino1998Model_VAD2_output_1000.mat
-    │   ├── ...
-    ├── X.mat
-    ├── Y.mat
-    ```
+
+		.
+		├── dnn  
+		│   ├── coefmaxs.npy  
+		│   ├── coefmins.npy  
+		│   ├── DNN_0D_Model.h5
+		│   ├── DNN_Performance.eps
+		│   ├── Losses.eps
+		│   ├── parammaxs.npy
+		│   ├── parammins.npy
+		│   ├── Xtest_norm.npy
+		│   └── Ytest_norm.npy
+		├── dnn_test_2020_04_07/
+		│   └── outputs
+		│       ├── Ursino1998Model_VAD2_output_0_exact.mat
+		│       ├── Ursino1998Model_VAD2_output_0_predicted.mat
+		│       ├── ...
+		├── log_generation.txt
+		├── log_test_dnn.txt
+		├── outputs/
+		│   ├── Ursino1998Model_VAD2_output_0.mat
+		│   ├── Ursino1998Model_VAD2_output_1000.mat
+		│   ├── ...
+		├── X.mat
+		├── Y.mat
