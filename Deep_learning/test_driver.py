@@ -41,6 +41,8 @@ run_train, run_test, path = udl.manage_args(sys.argv)
 
 print('Tensorflow version:', tf.__version__)
 
+# Note: this is now rather obsolete...
+# (i.e. this script should run either in train or test mode, but not both)
 # If we only want to test the DNN, we have to load the test data
 test_only  = True if run_test and not run_train else False
 # If we only want to train the DNN, we want to load data from memory rather than from files
@@ -65,6 +67,7 @@ if run_test:
     if test_only:
         print("\n========== LOADING")
         try:
+            # dnn_folder defined in Simulation_script/setup.py
             Xtest = np.load(dnn_folder + '/Xtest_norm.npy')
             Ytest = np.load(dnn_folder + '/Ytest_norm.npy')
         except FileNotFoundError:
@@ -80,7 +83,9 @@ if run_test:
             normdata[name] = np.load(dnn_folder + '/' + name + '.npy')
 
         model = keras.models.load_model(dnn_folder + "/DNN_0D_Model.h5")
+
         print("Data were loaded from files...")
+
         for name,val in normdata.items():
             print(name, '=', val)
         print("Xtest.shape =", Xtest.shape)
@@ -100,51 +105,10 @@ if run_test:
 
     # Setup the path for the model outputs
     today = datetime.datetime.now()
+    # output_folder_DNN_test defined in Simulation_script/setup.py
     output_folder_DNN_test += '_' + today.strftime("%Y") + '_' + today.strftime("%m") + '_' + today.strftime("%d")
 
     # Launch DNN testing
-    udl.test_dnn(model, Xtest, Ytest, normdata, param_lst, output_folder_DNN_test, file_path)
+    udl.test_dnn(model, Xtest, Ytest, normdata, param_lst,
+                 output_folder_DNN_test, file_path, dnn_folder)
 
-
-print("\nExiting to keep control...")
-exit()
-
-filepath="/Users/jean.bonnemain/Documents/Code/0d_model/Modelica_Code/0D_Original/"
-today = datetime.datetime.now()
-outputfolder=os.getcwd() + '/' + today.strftime("%Y") + '_' + today.strftime("%m") + '_' + today.strftime("%d")
-
-uo.prepareOutputFolder(outputfolder)
-
-testsamples = Ypred.shape[0]
-
-# run 0D simulations with OpenModelica to compare results of the 0D with exact
-# values and predicted values
-
-for indexsample in range(0,testsamples):
-    param1 = uo.Parameter('Param_LeftVentricle_Emax0')
-    param1.setValue(Ypred[indexsample,0])
-    param2 = uo.Parameter('Param_LeftVentricle_EmaxRef0')
-    param2.setValue(Ypred[indexsample,1])
-    param3 = uo.Parameter('Param_LeftVentricle_AGain_Emax')
-    param3.setValue(Ypred[indexsample,2])
-    param4 = uo.Parameter('Param_LeftVentricle_kE')
-    param4.setValue(Ypred[indexsample,3])
-
-    listParameters = [param1, param2, param3, param4]
-
-    suffix = str(indexsample) + "predicted"
-    uo.launchSimulation(filepath, listParameters, suffix, outputfolder)
-    
-    param1 = uo.Parameter('Param_LeftVentricle_Emax0')
-    param1.setValue(Ytest[indexsample,0])
-    param2 = uo.Parameter('Param_LeftVentricle_EmaxRef0')
-    param2.setValue(Ytest[indexsample,1])
-    param3 = uo.Parameter('Param_LeftVentricle_AGain_Emax')
-    param3.setValue(Ytest[indexsample,2])
-    param4 = uo.Parameter('Param_LeftVentricle_kE')
-    param4.setValue(Ytest[indexsample,3])
-
-    listParameters = [param1, param2, param3, param4]
-
-    suffix = str(indexsample) + "exact"
-    uo.launchSimulation(filepath, listParameters, suffix, outputfolder)

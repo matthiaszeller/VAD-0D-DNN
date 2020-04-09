@@ -141,7 +141,7 @@ def build_keras_model(input_shape, noutparams):
 
     return model
 
-def create_and_save_performance_fig(Ytest, Ypred, normdata):
+def create_and_save_performance_fig(Ytest, Ypred, normdata, folder):
     fig, axs = plt.subplots(2, 2)
     axs[0, 0].scatter(Ytest[:, 0], Ypred[:, 0])
     axs[0, 0].set_title('Left Ventricle Emax0')
@@ -163,9 +163,10 @@ def create_and_save_performance_fig(Ytest, Ypred, normdata):
     axs[1, 1].set_ylim(normdata['parammins'][3], normdata['parammaxs'][3])
     fig.set_figheight(10)
     fig.set_figwidth(15)
-    plt.savefig('DNN_Performance.eps')
+    plt.savefig(folder + '/DNN_Performance.eps')
 
-def test_dnn(model, Xtest, Ytest, normdata, param_lst, output_dnn_test, modelica_file_path):
+def test_dnn(model, Xtest, Ytest, normdata, param_lst,
+             output_dnn_test, modelica_file_path, dnn_folder):
     # Xtest, Ytest are normalizedf
 
     # ======== PREDICTION
@@ -183,8 +184,9 @@ def test_dnn(model, Xtest, Ytest, normdata, param_lst, output_dnn_test, modelica
     # scipy.io.savemat('Ypred.mat',mdict={'Xtest': Xtest})
 
     # ======== GENERATE AND SAVE FIGURE OF DNN PERFORMANCE
-    create_and_save_performance_fig(Ytest, Ypred, normdata)
-
+    create_and_save_performance_fig(Ytest, Ypred, normdata, dnn_folder)
+    print("exit to keep control")
+    exit()
     # ======== SIMULATE WITH MODELICA
     uo.runTestSimulation(Ytest=Ytest, Ytest_pred=Ypred, param_lst=param_lst,
                          output_dnn_test=output_dnn_test, modelica_file_path=modelica_file_path)
