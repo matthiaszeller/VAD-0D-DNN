@@ -1,4 +1,4 @@
-function [HR,period] = HeartRate(data,time)
+function [HR,period] = heartrate(data,time)
 %Compute Heart rate and period
 
 [pks,locs] = findpeaks(data);
