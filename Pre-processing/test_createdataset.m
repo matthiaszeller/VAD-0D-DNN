@@ -10,7 +10,7 @@ clc
 
 % =========================== SETUP
 % Setup the paths and time discretization
-setup
+setup_preprocessing
 
 % =========================== PROCESS PREDICTORS
 
