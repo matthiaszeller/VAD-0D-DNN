@@ -185,8 +185,7 @@ def test_dnn(model, Xtest, Ytest, normdata, param_lst,
 
     # ======== GENERATE AND SAVE FIGURE OF DNN PERFORMANCE
     create_and_save_performance_fig(Ytest, Ypred, normdata, dnn_folder)
-    print("exit to keep control")
-    exit()
+
     # ======== SIMULATE WITH MODELICA
     uo.runTestSimulation(Ytest=Ytest, Ytest_pred=Ypred, param_lst=param_lst,
                          output_dnn_test=output_dnn_test, modelica_file_path=modelica_file_path)
