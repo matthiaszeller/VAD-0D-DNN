@@ -1,7 +1,9 @@
 clear all
 clc
 
-pathmats = '/Users/jean.bonnemain/Documents/Results/0d_model/2019_12_05/outputs/';
+setupproj
+pathmats = output_path;
+%pathmats = '/Users/jean.bonnemain/Documents/Results/0d_model/2019_12_05/outputs/';
 
 % create input matrix with predicted data
 inputvariablesname = {'SystemicArteries.PC'; ...

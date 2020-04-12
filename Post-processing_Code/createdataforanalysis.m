@@ -57,6 +57,7 @@ for file = files'
 %     [RVPsubrange,tsubrange]=timerange(RVP,t,tsub_min,tsub_max);
     
     X(count,:)=[HR,SAPM,SAPS,SAPD,PAPM,PAPS,PAPD,LVEF, LVEDV, LVESV, CI];
+    disp(count)
     count = count + 1;
 end
 end

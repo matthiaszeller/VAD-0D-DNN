@@ -1,22 +1,22 @@
 
-.idea
 
 # Jupyter notebook checkpoints
 *.ipynb_checkpoints*
 
 # Pycharm config files
 *.xml
+.idea
 
 # Python
 *.pyc
 *__pycache__
 
 # Output files
-X.mat
-Y.mat
+*.mat
 *.npy
 *.eps
 *.h5
+*.csv
 
 # Octave
 octave-workspace

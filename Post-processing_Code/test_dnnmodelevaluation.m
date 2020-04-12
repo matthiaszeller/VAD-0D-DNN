@@ -1,22 +1,29 @@
+clear
 
+% =========== PATH & FILE MANAGEMENT
+setupproj
 % Load the path where the data is. In this case, we want to load the results
 % of the 0-D simulations.
-%FilePathOutputs='/Users/jean.bonnemain/Documents/Results/0d_model/2019_12_05/outputs/';
-FilePathOutputs='/Users/jean.bonnemain/Documents/Code/0d_model/Deep_learning/2020_01_13/outputs/';
+%FilePathOutputs='/Users/jean.bonnemain/Documents/Code/0d_model/Deep_learning/2020_01_13/outputs/';
+FilePathOutputs = output_path; % from setupproj
 
 % We also want to load the parameters.
-%FilePathParameters='/Users/jean.bonnemain/Documents/Results/0d_model/2019_12_05/models/';
-
 FilePathParameters='/Users/jean.bonnemain/Documents/Code/0d_model/Deep_learning/2020_01_13/models/';
 
+filesExact = dir([FilePathOutputs,'*exact.mat']);
+filesPredicted = dir([FilePathOutputs,'*predicted.mat']);
+
+
+% =========== FIND SIMULATION TIME & TIME STEP
 % Load first file to identify the time step and duration of the simulation
-FirstFileName=[FilePathOutputs,'Ursino1998Model_output_0exact.mat'];
+FirstFileName=test_file_exact; % from setupproj
 res=load(FirstFileName);
 
 TotalSimulationTime = (res.data_2(1,end));
 tsub_min=ceil((1/2)*TotalSimulationTime);
 tsub_max=TotalSimulationTime;
 
+% =========== DEFINE VARIABLES
 % Names of the variables we want to analyze. Names come from the 0D model.
 variablesname = {'SystemicArteries.PC','SAP'; ...
                       'SystemicArteries.PC','SAP'; ...
@@ -28,10 +35,7 @@ variablesname = {'SystemicArteries.PC','SAP'; ...
                       'LeftAtrium.PC', 'LAP'; ...
                       'AorticValve.Q', 'AoQ'; ...
                       };
-
-filesExact = dir([FilePathOutputs,'*exact.mat']);
-filesPredicted = dir([FilePathOutputs,'*predicted.mat']);
-
+                  
 
 % Values to extract and analyze :
 % LVEDV: Left ventricular end diastolic volume
@@ -51,6 +55,8 @@ SDexact=std(Xexact);
 SDpredicted=std(Xpredicted);
 SDErrorMatrix=std(abs(Xexact-Xpredicted));
 table = [SDErrorMatrix; meanErrorMatrix; mean(Xexact); meanRelErrorMatrix; SDexact];
+
+
 
 % nfilesExact = size(filesExact,1);
 % %nvariables = size(variablesname,1);

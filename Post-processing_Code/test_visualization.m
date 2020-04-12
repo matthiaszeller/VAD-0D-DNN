@@ -99,6 +99,7 @@ xlabel('Volume [ml]','FontSize',16)
 ylabel('Pressure [mmHg]','FontSize',16)
 title('\it{Pressure - Volume Curves}','FontSize',22)
 legend('Left Ventricle','Right Ventricle', 'Location','northwest');
+grid();
 set(gcf,'PaperPositionMode','auto')
 print('PVCurves.eps','-depsc','-r0')
 hold off;
@@ -113,6 +114,7 @@ ylabel('Pressure [mmHg]','FontSize',16)
 title('\it{Systemic arterial pressure}','FontSize',22)
 xlim([TotalSimulationTime-2,TotalSimulationTime]);
 ylim([0,max(SAPsubrange)+10]);
+grid();
 set(gcf,'PaperPositionMode','auto')
 print('SystemicArterialPressure.eps','-depsc','-r0')
 hold off;
@@ -127,6 +129,7 @@ ylabel('Pressure [mmHg]','FontSize',16)
 title('\it{Pulmonary arterial pressure}','FontSize',22)
 xlim([TotalSimulationTime-2,TotalSimulationTime]);
 ylim([0,max(PAPsubrange)+10]);
+grid();
 set(gcf,'PaperPositionMode','auto')
 print('PulmonaryArterialPressure2.eps','-depsc','-r0')
 hold off;
