@@ -180,6 +180,8 @@ def test_dnn(model, Xtest, Ytest, normdata, param_lst,
     print(Ypred[0, :])
     print(Xtest[0, 0, :])  # return frequency for systemic arteries
 
+    np.savetxt(dnn_folder+'/Ytest.txt', Ytest)
+    np.savetxt(dnn_folder+'/Ytestpred.txt', Ypred)
     # scipy.io.savemat('Ypred.mat',mdict={'Ypred': Ypred})
     # scipy.io.savemat('Ypred.mat',mdict={'Xtest': Xtest})
 

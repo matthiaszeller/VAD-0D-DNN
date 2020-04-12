@@ -1,5 +1,8 @@
 # VAD-0D-DNN
 
+**DISCLAIMER**: the `findpeaks` function of Octave does not work as expected. 
+Please use Matlab. 
+
 ## About
 
 Semester project with Jean Bonnemain and Simone Deparis. 
