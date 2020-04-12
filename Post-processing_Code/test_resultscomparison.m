@@ -9,33 +9,40 @@ setup
 resultsExact=load([output_path,'Ursino1998Model_VAD2_output_120_exact.mat']);
 resultsPredicted=load([output_path,'Ursino1998Model_VAD2_output_120_predicted.mat']);
 
+
 TotalSimulationTime = (resultsExact.data_2(1,end));
 %tsub_min=ceil((2/3)*TotalSimulationTime);
 tsub_min=0;
 tsub_max=TotalSimulationTime;
 
+% Systemic arteries pressure
 [SAPExact,t]=extractresults('SystemicArteries.PC',resultsExact);
 [SAPExactsubrange,tsubrangexact]=timerange(SAPExact,t,tsub_min,tsub_max);
 
 [SAPPredicted,t]=extractresults('SystemicArteries.PC',resultsPredicted);
 [SAPPredictedsubrange,tsubrangepredicted]=timerange(SAPPredicted,t,tsub_min,tsub_max);
 
-[HRExact,periodExact] = heartrate(SAPExactsubrange,tsubrangexact);
-[HRPredicted,periodPredicted] = heartrate(SAPPredictedsubrange,tsubrangepredicted);
+% Heart rate
+[HRExact,periodExact] = heartrate(SAPExactsubrange,tsubrangexact)
+[HRPredicted,periodPredicted] = heartrate(SAPPredictedsubrange,tsubrangepredicted)
+
 
 % Left ventricular volume
+% time is not useful here
 [V_LVExact,t]=extractresults('LeftVentricle.V',resultsExact);
 [V_LVExactsubrange,tsubrangePVCurve]=timerange(V_LVExact,t,tsub_max-periodExact,tsub_max);
+%[V_LVExactsubrange,tsubrangePVCurve]=timerange(V_LVExact,t,tsub_min,tsub_max);
+tsubrangePVCurve
 
-% Left ventricular volume
 [V_LVPredicted,t]=extractresults('LeftVentricle.V',resultsPredicted);
 [V_LVPredictedsubrange,tsubrangePVCurve]=timerange(V_LVPredicted,t,tsub_max-periodPredicted,tsub_max);
+%[V_LVPredictedsubrange,tsubrangePVCurve]=timerange(V_LVPredicted,t,tsub_min,tsub_max);
+tsubrangePVCurve
 
-% Left ventricular volume
+% Left ventricular pressure
 [P_LVExact,t]=extractresults('LeftVentricle.PV',resultsExact);
 [P_LVExactsubrange,tsubrangePVCurve]=timerange(P_LVExact,t,tsub_max-periodExact,tsub_max);
 
-% Left ventricular volume
 [P_LVPredicted,t]=extractresults('LeftVentricle.PV',resultsPredicted);
 [P_LVPredictedsubrange,tsubrangePVCurve]=timerange(P_LVPredicted,t,tsub_max-periodPredicted,tsub_max);
 
@@ -93,5 +100,5 @@ plot(V_LVPredictedsubrange,P_LVPredictedsubrange, '--b');
 xlabel('Volume [ml]','FontSize',16)
 ylabel('Pressure [mmHg]','FontSize',16)
 title('\it{Pressure - Volume Curves}','FontSize',22)
-%legend('Left Ventricle','Right Ventricle', 'Location','northwest');
+legend('Exact','Predicted', 'Location','northwest');
 hold off;
