@@ -31,13 +31,11 @@ tsub_max=TotalSimulationTime;
 % time is not useful here
 [V_LVExact,t]=extractresults('LeftVentricle.V',resultsExact);
 [V_LVExactsubrange,tsubrangePVCurve]=timerange(V_LVExact,t,tsub_max-periodExact,tsub_max);
-%[V_LVExactsubrange,tsubrangePVCurve]=timerange(V_LVExact,t,tsub_min,tsub_max);
-tsubrangePVCurve
+
 
 [V_LVPredicted,t]=extractresults('LeftVentricle.V',resultsPredicted);
 [V_LVPredictedsubrange,tsubrangePVCurve]=timerange(V_LVPredicted,t,tsub_max-periodPredicted,tsub_max);
-%[V_LVPredictedsubrange,tsubrangePVCurve]=timerange(V_LVPredicted,t,tsub_min,tsub_max);
-tsubrangePVCurve
+
 
 % Left ventricular pressure
 [P_LVExact,t]=extractresults('LeftVentricle.PV',resultsExact);
