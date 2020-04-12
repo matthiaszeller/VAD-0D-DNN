@@ -3,9 +3,10 @@
 
 % Load results
 %FileName='Ursino1998Model_SHF_20s.mat';
-FileName='/Users/jean.bonnemain/Documents/Code/0d_model/Deep_learning/2020_01_13/outputs/Ursino1998Model_output_0exact.mat';
+%FileName='/Users/jean.bonnemain/Documents/Code/0d_model/Deep_learning/2020_01_13/outputs/Ursino1998Model_output_0exact.mat';
 
-Results=load(FileName);
+setupproj
+Results=load(test_file_exact);
 
 % Find the total simulation time in data_2
 TotalSimulationTime = (Results.data_2(1,end));

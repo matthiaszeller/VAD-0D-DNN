@@ -2,7 +2,7 @@ clear all
 close all
 clc
 
-setup
+setupproj
 %FilePath='/Users/jean.bonnemain/Documents/Results/0d_model/2019_12_05/outputs/';
 %FilePath='/Users/jean.bonnemain/Documents/Code/0d_model/Simulation_script/2019_12_05/outputs/';
 
