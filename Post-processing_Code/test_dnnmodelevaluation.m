@@ -80,7 +80,10 @@ table = [
     CImin;
     CImax;
 ];
-writematrix(table,'table.xlsx');
+writematrix(table,'table.csv');
+writematrix(Xexact,'Xexact.csv');
+writematrix(Xpredicted,'Xpredicted.csv');
+
 %x=(abs(Xexact(:,7)-Xpredicted(:,7)));
 %pd=fitdist(x,'normal')
 %ci=paramci(pd)
