@@ -42,11 +42,18 @@ for file = files'
     [AoQ,t]=extractresults('AorticValve.Q',results);
     [AoQsubrange,tsubrange]=timerange(AoQ,t,tsub_min,tsub_max);
 
-% Compute mean aortic flow (in L/min) and cardiac index (normalized for 
-%body surface, here 1.8m^2)
-    MeanAoQ = mean(AoQsubrange)*60/1000;
+    % Compute mean aortic flow (in L/min) and cardiac index (normalized for 
+    %body surface, here 1.8m^2)
+    MeanAoQ = meanintegral(AoQsubrange,tsubrange)*60/1000;
     CI = MeanAoQ/1.8;
 
+    % Left atrial pressure
+    [L_Atria,t]=extractresults('LeftAtrium.PC',results);
+    [L_Atriasubrange,tsubrange]=timerange(L_Atria,t,tsub_min,tsub_max);
+
+    % Compute Pulmonary Capillary Wedge Pressure
+    PCPW=mean(L_Atriasubrange);
+    
 %     [LVP,t]=extractresults('LeftVentricle.PV',results);
 %     [LVPsubrange,tsubrange]=timerange(LVP,t,tsub_min,tsub_max);
 %     
@@ -56,8 +63,7 @@ for file = files'
 %     [RVP,t]=extractresults('RightVentricle.PV',results);
 %     [RVPsubrange,tsubrange]=timerange(RVP,t,tsub_min,tsub_max);
     
-    X(count,:)=[HR,SAPM,SAPS,SAPD,PAPM,PAPS,PAPD,LVEF, LVEDV, LVESV, CI];
-    disp(count)
+    X(count,:)=[HR,SAPM,SAPS,SAPD,PAPM,PAPS,PAPD,LVEF, LVEDV, LVESV, CI, PCPW];
     count = count + 1;
 end
 end

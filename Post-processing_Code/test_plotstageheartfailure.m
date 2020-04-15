@@ -117,9 +117,9 @@ end
 % % 
 figure;
 hold on;
-plot(data(2).V_LVsubrange,data(2).P_LVsubrange, '-b');
-plot(data(4).V_LVsubrange,data(4).P_LVsubrange, '--g');
-plot(data(1).V_LVsubrange,data(1).P_LVsubrange, ':r');
+plot(data(2).V_LVsubrange,data(2).P_LVsubrange, '-b', 'LineWidth',2);
+plot(data(1).V_LVsubrange,data(1).P_LVsubrange, '-g','LineWidth',2);
+plot(data(3).V_LVsubrange,data(3).P_LVsubrange, '-r','LineWidth',2);
 legend('Normal Heart','Moderate Heart Failure','Severe Heart Failure');
 xlabel('Volume [ml]','FontSize',16)
 ylabel('Pressure [mmHg]','FontSize',16)
@@ -127,3 +127,24 @@ title('\it{Pressure - Volume Curves}','FontSize',22)
 print('PVCurves.eps','-depsc','-r0')
 hold off;
 % 
+
+figure;
+hold on;
+plot(tsubrange,data(3).SAPsubrange,'-k', 'LineWidth',3);
+%plot(tsubrangepredicted,SAPPredictedsubrange,'--b');
+xlabel('Time [s]','FontSize',16)
+ylabel('Pressure [mmHg]','FontSize',16)
+title('\it{Systemic arterial pressure}','FontSize',22)
+xlim([TotalSimulationTime-2,TotalSimulationTime]);
+ylim([0,max(data(3).SAPsubrange)+10]);
+hold off;
+
+figure;
+hold on;
+plot(data(2).V_LVsubrange,data(2).P_LVsubrange, '-m', 'LineWidth',2);
+xlabel('Volume [ml]','FontSize',16)
+ylabel('Pressure [mmHg]','FontSize',16)
+title('\it{Pressure - Volume Curve}','FontSize',22)
+xlim([0,160]);
+print('PVCurves_global_concept.eps','-depsc','-r0')
+hold off;
