@@ -13,8 +13,12 @@ from tensorflow import keras
 import matplotlib.pyplot as plt
 import utils_openmodelica as uo
 
-# Normalizes output parameters. If we want to use max and min parameters from 
-# the trained model, just give them as input.
+# CAUTION : use always the same min and max parameters for the training and the
+# testing. If not, results are wrong.
+
+# Normalizes output parameters. If we want to use max and min parameters from
+# the trained model, just give them as input. If no min and max are give,
+# parameters are computed from the data.
 def normalizeoutputmatDL(mat,newmins,newmaxs, parammins=None, parammaxs=None):
     shapes = mat.shape
     
@@ -127,11 +131,10 @@ def normalizeoutputmat(mat, newmins, newmaxs):
 def build_keras_model(input_shape, noutparams):
     model = keras.Sequential([
         keras.layers.Flatten(input_shape=input_shape),
-        keras.layers.Dense(32, activation='relu'),
-        keras.layers.Dense(32, activation='relu'),
-        keras.layers.Dense(32, activation='relu'),
-        keras.layers.Dense(32, activation='relu'),
-        keras.layers.Dense(32, activation='relu'),
+        keras.layers.Dense(16, activation='relu'),
+        keras.layers.Dense(16, activation='relu'),
+        keras.layers.Dense(16, activation='relu'),
+        keras.layers.Dense(16, activation='relu'),
         keras.layers.Dense(noutparams, activation='sigmoid')
     ])
 
