@@ -7,6 +7,7 @@ import shutil
 
 from timeit import default_timer as timer
 
+
 class Parameter: 
     def __init__(self, name, minparam = None, maxparam = None):
         self.minparam = minparam
@@ -23,37 +24,6 @@ class Parameter:
         if self.randomsampling:
             self.value = self.minparam + (self.maxparam - self.minparam) * random()
 
-def changeValueInFile(filepath, listParameter, outputfile, outputfolder):
-    filename = filepath + "Mathcard"
-    numparams = len(listParameter)
-    numParameters = -1
-    count = 1
-    filehandler = open(filename + ".mo", "r");
-    filehandlerout = open(filepath + "/" + outputfile, "w")
-    for line in filehandler:
-        copyLine = 1
-        # Principle: find the following model in the file,
-        # once it is found, we modify as many as `numparams` parameters,
-        # thus it's ensured that only the params of that model are modified
-        if "model ModelParametersNH" in line:
-            numParameters = 0
-        for parameter in listParameter:
-            if parameter.name in line and numParameters < numparams and numParameters >= 0:
-                indexequal = line.rfind("=")
-                line = line[:indexequal]
-                parameter.sample()
-                line += "= " + str(parameter.value) + ";\n"
-                filehandlerout.write(line)
-                numParameters = numParameters + 1
-                copyLine = 0
-        if copyLine:
-            filehandlerout.write(line)
-        count = count + 1
-    filehandler.close()
-    filehandlerout.close()
-
-    q("shutil.move :" + filepath + outputfile + "->" + outputfolder + "/models/" + outputfile)
-    shutil.move(filepath + outputfile, outputfolder + "/models/" + outputfile)
 
 def prepareOutputFolder(outputfolder):
     if os.path.exists(outputfolder):
@@ -66,6 +36,7 @@ def prepareOutputFolder(outputfolder):
     os.mkdir(data_output)
     q("<INIT> Output folder: " + outputfolder)
     return data_output
+
 
 def runcmd(omc, cmd, env):
     """Run openmodelica command with the OMCSessionZMQ instance passed as an argument"""
@@ -91,16 +62,15 @@ def runSimulation(N, param_lst, output_folder, file, LVAD):
     according to the parameters specified in param_lst.
     Note: we can run simulation without build by using ./exec_name -override=paramName=ParamValue"""
     # 1. Create folders
-    output_folder_test_dnn = output_folder + '/testdnn'
     try:
-        out = prepareOutputFolder(output_folder_test_dnn)
+        out = prepareOutputFolder(output_folder)
     except Exception:
         print("\n===================== FATAL ERROR =====================")
-        print("Could not create the folder '{}' for unknown reason".format(output_folder_test_dnn))
+        print("Could not create the folder '{}' for unknown reason".format(output_folder))
     # Do not overwrite in existing folder ! Abort the program
     if out == False:
         print("\n===================== FATAL ERROR =====================")
-        print("The folder '{}' already exists".format(output_folder_test_dnn))
+        print("The folder '{}' already exists".format(output_folder))
         exit()
     # 2. Run OMC session
     omc = OMCSessionZMQ()
@@ -150,6 +120,7 @@ def runSimulation(N, param_lst, output_folder, file, LVAD):
         q("Simulation time (n={}): {:.5}".format(n, end-start))
     writeParamData(param_data, output_folder)
 
+
 def writeParamData(data, output_folder):
     file_path = output_folder + "/" + "parameters.txt"
     # Format the file content in a string
@@ -160,9 +131,10 @@ def writeParamData(data, output_folder):
         line = str(n)
         for col in cols: line += ","+str(values[col])
         txt += "\n" + line
-	# Open the file and write
+    # Open the file and write
     with open(file_path, 'w') as f:
         f.write(txt)
+
 
 def runTestSimulation(Ytest, Ytest_pred, param_lst, output_dnn_test, modelica_file_path):
     """Given the predicted responses of the neural network and the exact ones (those used to generate input data for DNN)
