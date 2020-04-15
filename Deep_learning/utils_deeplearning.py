@@ -9,6 +9,7 @@ Created on Tue Jan 21 15:11:02 2020
 import numpy as np
 import scipy.io as sio
 import os.path
+import argparse
 from tensorflow import keras
 import matplotlib.pyplot as plt
 import utils_openmodelica as uo
@@ -195,8 +196,9 @@ def test_dnn(model, Xtest, Ytest, normdata, param_lst,
     uo.runTestSimulation(Ytest=Ytest, Ytest_pred=Ypred, param_lst=param_lst,
                          output_dnn_test=output_dnn_test, modelica_file_path=modelica_file_path)
 
-def train_dnn(perccoef, files_path='', save_test_data=True):
+def train_dnn(perccoef, files_path=None, save_test_data=True, verbose=False):
     # ======== DATA LOADING
+    if files_path is None: files_path = ''
     X = sio.loadmat(files_path+'X.mat')['X']
     Y = sio.loadmat(files_path+'Y.mat')['Y']
     print("Loaded X.mat ({}) and Y.mat ({}) files"
@@ -257,8 +259,8 @@ def train_dnn(perccoef, files_path='', save_test_data=True):
 
     Xtrain = X[0:samplestrain,:,:]
     Ytrain = Y[0:samplestrain,:]
-    Xtest = X[samplestrain+1:,:,:]
-    Ytest = Y[samplestrain+1:,:]
+    Xtest = X[samplestrain:,:,:]
+    Ytest = Y[samplestrain:,:]
 
     data = {'Xtrain':Xtrain, 'Xtest':Xtest, 'Ytrain':Ytrain, 'Ytest':Ytest}
     print("Training and test set generated: shapes are", {key:val.shape for key,val in data.items()})
@@ -269,7 +271,8 @@ def train_dnn(perccoef, files_path='', save_test_data=True):
 
     # ======== TRAIN DNN
     print("Fitting the model...")
-    history = model.fit(Xtrain, Ytrain, epochs=1000, validation_split=percvalidation, verbose=0)
+    verbose = 1 if verbose else 0
+    history = model.fit(Xtrain, Ytrain, epochs=1000, validation_split=percvalidation, verbose=verbose)
     print("Model is trained")
 
     # ======== SAVE DATA
@@ -292,56 +295,12 @@ def train_dnn(perccoef, files_path='', save_test_data=True):
 
 
 def manage_args(args):
-    N = len(args)
-    # Running mode
-    run_train, run_test = True, True
-    # Location of X.mat and Y.mat
-    path_files = ''
+    parser = argparse.ArgumentParser()
+    parser.add_argument('mode', choices=['train', 'test'], help='choose whether to train or test the DNN')
+    parser.add_argument('-p', '--path', help='folder containing X.mat and Y.mat (used for training)')
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help='display the tensorflow output when model is trained')
+    args = parser.parse_args(args)
 
-    # Get rid of the python script in the args
-    args = args[1:]
+    return args
 
-    # Specification of the files path
-    if '--path' in args:
-        i = args.index('--path')
-        folder = args[i+1]
-        if folder[-1] != '/': folder += '/'
-        if not os.path.isdir(folder):
-            print("ERROR ! Invalid directory '{}'".format(folder))
-            exit()
-        path_files = folder
-
-    # Help
-    if '-h' in args or 'help' in args:
-        print("\nThe following commands can be provided (all are optional, if none is provided -> test & train by default):")
-        #print("* 'help' or '-h'")
-        print("* 'train'\t\tTrain the DNN with X.mat, Y.mat.\n\t\t\tCreates files 1-8.")
-        print("* 'test'\t\tTest the DNN by loading files 1-4 and 6-8")
-        print("* '--path <folder>'\tSpecify the directory of X.mat and Y.mat")
-        print("\nFiles description:")
-        print("1. coefmins\tminimums of the original data (input) before normalization")
-        print("2. coefmaxs\tmaximums of the original data (input) before normalization")
-        print("3. parammins\tminimums of the original data (output) before normalization")
-        print("4. parammaxs\tmaximums of the original data (output) before normalization")
-        print("5. Losses.eps\tfigure showing the MSE of the training and validation sets")
-        print("6. DNN_0D_Model.h5\tDNN model")
-        print("7. Xtest.npy\tInput test data")
-        print("8. Ytest.npy\tOutput test data")
-        exit()
-    # Train only
-    if 'train' in args:
-        run_test = False
-        print("Running in train mode...")
-    # Test only
-    elif 'test' in args:
-        run_train = False
-        print("Running in test mode...")
-    # Error
-    #else:
-    #    print("ERROR ! Invalid argument(s).\nProgram abortion.")
-    #    exit()
-
-    if run_test and run_train:
-        print("Running train and test mode...")
-
-    return run_train, run_test, path_files

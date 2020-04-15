@@ -36,60 +36,50 @@ perccoef = 0.05
 
 # ============ IMPLEMENTATION =============
 
-# One can run the script with arguments to run specific parts
-run_train, run_test, path = udl.manage_args(sys.argv)
+# Manage arguments
+args = udl.manage_args(sys.argv[1:])
 
 print('Tensorflow version:', tf.__version__)
 
-# Note: this is now rather obsolete...
-# (i.e. this script should run either in train or test mode, but not both)
-# If we only want to test the DNN, we have to load the test data
-test_only  = True if run_test and not run_train else False
-# If we only want to train the DNN, we want to load data from memory rather than from files
-train_only = True if run_train and not run_test else False
-
 # Training mode
-if run_train:
+if args.mode == 'train':
     print("\n========== TRAINING")
-    # Launch DNN training
-    res = udl.train_dnn(perccoef, files_path=path, save_test_data=True)
 
-    # If we train & test, load data from memory rather than from files
-    if not train_only:
-        normdata = res[0]
-        (Xtest, Ytest) = res[1]
-        model = res[2]
-        del res
+    # Launch DNN training
+    try:
+        res = udl.train_dnn(perccoef, files_path=args.path, save_test_data=True, verbose=args.verbose)
+    except FileNotFoundError:
+        print('\n<ERROR> X.mat or Y.mat was not found, you should use the --path argument.')
+
 
 # Testing mode
-if run_test:
-    # If run-only mode, load data from files
-    if test_only:
-        print("\n========== LOADING")
-        try:
-            # dnn_folder defined in Simulation_script/setup.py
-            Xtest = np.load(dnn_folder + '/Xtest_norm.npy')
-            Ytest = np.load(dnn_folder + '/Ytest_norm.npy')
-        except FileNotFoundError:
-            print("\nERROR ! Xtest_norm and/or Ytest_norm not found, you probably \
-            did not run the training mode before or 'dnn_folder' in Simulation_script/setup.py is wrong")
-            exit()
+elif args.mode == 'test':
+    # Load data from files
+    print("\n========== LOADING")
+    try:
+        # dnn_folder defined in Simulation_script/setup.py
+        Xtest = np.load(dnn_folder + '/Xtest_norm.npy')
+        Ytest = np.load(dnn_folder + '/Ytest_norm.npy')
+    except FileNotFoundError:
+        print("\nERROR ! Xtest_norm and/or Ytest_norm not found, you probably \
+        did not run the training mode before or 'dnn_folder' in Simulation_script/setup.py does not target the right path")
+        exit()
 
-        normdata = {
-            'coefmins':None, 'coefmaxs':None,
-            'parammins':None, 'parammaxs':None
-        }
-        for name in normdata:
-            normdata[name] = np.load(dnn_folder + '/' + name + '.npy')
+    normdata = {
+        'coefmins':None, 'coefmaxs':None,
+        'parammins':None, 'parammaxs':None
+    }
+    for name in normdata:
+        normdata[name] = np.load(dnn_folder + '/' + name + '.npy')
 
-        model = keras.models.load_model(dnn_folder + "/DNN_0D_Model.h5")
+    model = keras.models.load_model(dnn_folder + "/DNN_0D_Model.h5")
 
-        print("Data were loaded from files...")
+    print("Data were loaded from files...")
 
-        for name,val in normdata.items():
-            print(name, '=', val)
-        print("Xtest.shape =", Xtest.shape)
-        print("Ytest.shape =", Ytest.shape)
+    for name,val in normdata.items():
+        print(name, '=', val)
+    print("Xtest.shape =", Xtest.shape)
+    print("Ytest.shape =", Ytest.shape)
 
 
     print("\n========== TESTING")
@@ -111,4 +101,8 @@ if run_test:
     # Launch DNN testing
     udl.test_dnn(model, Xtest, Ytest, normdata, param_lst,
                  output_folder_DNN_test, file_path, dnn_folder)
+
+else:
+    print('Error')
+
 
