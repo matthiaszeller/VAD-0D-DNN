@@ -6,8 +6,8 @@ setupproj
 %FilePath='/Users/jean.bonnemain/Documents/Results/0d_model/2019_12_05/outputs/';
 %FilePath='/Users/jean.bonnemain/Documents/Code/0d_model/Simulation_script/2019_12_05/outputs/';
 
-resultsExact=load([output_path,'Ursino1998Model_VAD2_output_120_exact.mat']);
-resultsPredicted=load([output_path,'Ursino1998Model_VAD2_output_120_predicted.mat']);
+resultsExact=load([output_path,'Ursino1998Model_output_120_exact.mat']);
+resultsPredicted=load([output_path,'Ursino1998Model_output_120_predicted.mat']);
 
 
 TotalSimulationTime = (resultsExact.data_2(1,end));
