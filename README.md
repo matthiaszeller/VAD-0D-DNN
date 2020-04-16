@@ -80,6 +80,8 @@ Those output paths will be used in downstream procedures: be aware that when the
 description refers to the output folder, it implicitly refers to the 
 output folder *with* the date as a suffix (e.g. we refer to `output_path` instead of `output_path_MM_dd_YYYY`).
 
+Note: find the diagram below to visualize the data flow
+
 1. Setup simulation by modifying [Simulation_script/setup.py](Simulation_script/setup.py).
     * Make sure that the `output_folder` is in a disk containing enough space (very minimum: 10GB for N=10'000).
       It will be the main folder that contains all the data.
@@ -106,7 +108,7 @@ output folder *with* the date as a suffix (e.g. we refer to `output_path` instea
     * `pathparams` should target the file `parameters.txt` located in the directory created
       by [Simulation_script/launch_openmodelica.py](Simulation_script/launch_openmodelica.py)
 
-1. Open Matlab/Octave and run [Pre-processing/test_createdataset.m](Pre-processing/test_createdataset.m).
+1. Open Matlab and run [Pre-processing/test_createdataset.m](Pre-processing/test_createdataset.m).
    This will generate `X.mat` and `Y.mat` files  (in Matlab working directory).
 
 1. Move `X.mat` and `Y.mat` in the `output_folder` (the one mentionned in steps 3, 4, 5) 
@@ -171,7 +173,7 @@ output folder *with* the date as a suffix (e.g. we refer to `output_path` instea
 		│   ├── Xtest_norm.npy
 		│   └── Ytest_norm.npy
 		├── dnn_test_2020_04_07/
-		│   └── outputs
+		│   └── outputs/
 		│       ├── Ursino1998Model_VAD2_output_0_exact.mat
 		│       ├── Ursino1998Model_VAD2_output_0_predicted.mat
 		│       ├── ...
@@ -183,3 +185,22 @@ output folder *with* the date as a suffix (e.g. we refer to `output_path` instea
 		│   ├── ...
 		├── X.mat
 		├── Y.mat
+
+1. Change paths in the script [Post-processing_Code/setupproj.m](Post-processing_Code/setupproj.m)
+    * `output_path` must match the output path created by [test_driver.py](Deep_learning/test_driver.py)
+    * `test_file_exact` must match any file in the path defined above
+    
+1. Run [Post-processing_Code/test_dnnmodelevaluation.m](Post-processing_Code/test_dnnmodelevaluation.m)
+    * This creates `table.csv`, `Xexact.csv`, `Xpredicted.csv` files
+    * `mkdir results` in the `output_folder` that contains all the data and move those files in the result folder
+    
+1. Run the notebook [notebooks/N7-Results-report.ipynb](notebooks/N7-Results-report.ipynb)
+    * Setup the paths defined in the 2nd cell
+    * This will create plots and format the result table
+    * You can repeat all steps and set `SIMULATION_LVAD = False` in [Simulation_script/setup.py](Simulation_script/setup.py)
+      to have a dataset without an assist device, the notebook will make plots to compare the two.
+
+## Data flow
+
+![dataflow](res/diagram/data_flow.bmp)
+
