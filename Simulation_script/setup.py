@@ -26,7 +26,7 @@ def q(msg):
 # ============ DNN TESTING
 
 # Location of the DNN training files
-dnn_folder = "/media/maousi/Data/tmp/simulations_2020_03_21/dnn_16neurons"
+dnn_folder = "/media/maousi/Data/tmp/simulation_noLVAD_2020_04_15/dnn"
 
 # Output folder path for the DNN testing
-output_folder_DNN_test = "/media/maousi/Data/tmp/simulations_2020_03_21/dnn_16neu_test"
+output_folder_DNN_test = "/media/maousi/Data/tmp/simulation_noLVAD_2020_04_15/dnn_test"
