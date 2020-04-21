@@ -2,6 +2,8 @@
 
 # Jupyter notebook checkpoints
 *.ipynb_checkpoints*
+# Notebook conversion (to PDF)
+notebooks/converted/
 
 # Pycharm config files
 *.xml
