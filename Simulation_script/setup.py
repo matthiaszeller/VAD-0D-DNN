@@ -10,7 +10,7 @@ numberofsamples = 10000
 file_path="/media/maousi/Data/Documents/Programmation/git/vad-0d-dnn/modelica/original/Mathcard.mo"
 
 # Output folder path for the raw dataset
-output_folder="/media/maousi/Data/tmp/simulation_LVAD_RPM5000"
+output_folder="/media/maousi/Data/tmp/simulation_LVAD_RPM6000"
 
 # SIMULATION WITH/WITHOUT LVAD
 # Warning: this applies for dataset generation and for DNN testing
