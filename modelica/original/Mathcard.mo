@@ -954,7 +954,7 @@ Connector with one input signal of type Real.
         parameter Real Param_AutoregulationCenter_fevinf = 6.3;
         parameter Real Param_AutoregulationCenter_fcs0 = 25;
         parameter Real Param_AutoregulationCenter_kev = 7.06;
-        parameter Real Param_LVAD_RPM(unit = "RPM") = 4000;
+        parameter Real Param_LVAD_RPM(unit = "RPM") = 5000;
       end ModelParametersNH;
 
       model ModelParametersSHF_HTAP
