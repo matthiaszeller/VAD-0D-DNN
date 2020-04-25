@@ -710,16 +710,28 @@ Connector with one input signal of type Real.
 
       model VAD2 "Reimplementation of VAD model for Heart Mate III, i.e. with a new HQ curve"
         import Mathcard.Library.Connectors.*;
-        parameter Real RPM;
+        parameter Real RPM_c;
+        parameter Real Pulse_Period = 2.0;
+        parameter Real Pulse_Amplitude = 2000;
+        parameter Real Pulse_startTime = 0.0;
+        import Modelica.Blocks.Sources.Pulse;
+        Modelica.Blocks.Sources.Pulse PulseGeneratorUp(period = Pulse_Period, amplitude=Pulse_Amplitude, offset=RPM_c, width=10, startTime = Pulse_startTime + 0.15);
+        Modelica.Blocks.Sources.Pulse PulseGeneratorDown(period= Pulse_Period, amplitude=Pulse_Amplitude, offset=0, width=7.5, startTime=Pulse_startTime);
         Mathcard.Library.Connectors.Orifice Inlet annotation(
           Placement(visible = true, transformation(origin = {0.0, 60.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0), iconTransformation(origin = {0.0, 80.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
         Mathcard.Library.Connectors.Orifice Outlet annotation(
           Placement(visible = true, transformation(origin = {0.0, -51.6731}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0), iconTransformation(origin = {0.0, -80.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
-      public
+      //public
         // this should be protected
+      protected
         Real Q;
         Real dP;
+      public
+        Real RPM;
       equation
+        // Use pulse function to implement artificial pulse
+        RPM = PulseGeneratorUp.y - PulseGeneratorDown.y;
+      //
         Inlet.Q = Q;
         Outlet.Q = -Q;
         dP = Outlet.P - Inlet.P;
@@ -954,7 +966,7 @@ Connector with one input signal of type Real.
         parameter Real Param_AutoregulationCenter_fevinf = 6.3;
         parameter Real Param_AutoregulationCenter_fcs0 = 25;
         parameter Real Param_AutoregulationCenter_kev = 7.06;
-        parameter Real Param_LVAD_RPM(unit = "RPM") = 5000;
+        parameter Real Param_LVAD_RPM(unit = "RPM") = 6000;
       end ModelParametersNH;
 
       model ModelParametersSHF_HTAP
@@ -1187,13 +1199,14 @@ Connector with one input signal of type Real.
         model Ursino1998Model_VAD2 "HMIII VAD model"
           // EXTEND THE SUPERCLASS
           // CHOOSE THE HEART FAILURE LEVEL (MHF / SHF)
+          //extends Mathcard.Applications.Ursino1998.HMIII.ModelParametersMHF;
           extends Mathcard.Applications.Ursino1998.ModelParametersNH;
           // IMPORT MATHCARD LIBRARY
           import Mathcard.Library.*;
           // ============================
           //
           // VAD DEVICE
-          Mathcard.Library.Devices.VAD2 LVAD(RPM = Param_LVAD_RPM) annotation(
+          Mathcard.Library.Devices.VAD2 LVAD(RPM_c = Param_LVAD_RPM) annotation(
             Placement(visible = true, transformation(origin = {80.0, -20.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
           // LEFT ATRIUM
           Mathcard.Library.Heart.AutoregulatingChambers.Atrium LeftAtrium(C = Param_LeftAtrium_C, V0 = Param_LeftAtrium_V0, Vu0 = Param_LeftAtrium_Vu0) annotation(
@@ -1312,8 +1325,8 @@ Connector with one input signal of type Real.
           /* PUMP RPMs */
           //parameter Real Param_LVAD_RPM = 3000;
           //parameter Real Param_LVAD_RPM = 4000;
-          parameter Real Param_LVAD_RPM = 5000;
-          //parameter Real Param_LVAD_RPM = 6000;
+          //parameter Real Param_LVAD_RPM = 5000;
+          parameter Real Param_LVAD_RPM = 6000;
           //parameter Real Param_LVAD_RPM = 7000;
           //parameter Real Param_LVAD_RPM = 8000;
           //parameter Real Param_LVAD_RPM = 9000;
