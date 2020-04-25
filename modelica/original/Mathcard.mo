@@ -710,13 +710,18 @@ Connector with one input signal of type Real.
 
       model VAD2 "Reimplementation of VAD model for Heart Mate III, i.e. with a new HQ curve"
         import Mathcard.Library.Connectors.*;
-        parameter Real RPM_c;
-        parameter Real Pulse_Period = 2.0;
-        parameter Real Pulse_Amplitude = 2000;
-        parameter Real Pulse_startTime = 0.0;
         import Modelica.Blocks.Sources.Pulse;
-        Modelica.Blocks.Sources.Pulse PulseGeneratorUp(period = Pulse_Period, amplitude=Pulse_Amplitude, offset=RPM_c, width=10, startTime = Pulse_startTime + 0.15);
-        Modelica.Blocks.Sources.Pulse PulseGeneratorDown(period= Pulse_Period, amplitude=Pulse_Amplitude, offset=0, width=7.5, startTime=Pulse_startTime);
+        // Parameters for Artificial Pulse
+        parameter Real RPM_c;
+        parameter Real HMIII_Pulse_Period = 2.0;
+        parameter Real HMIII_Pulse_Amplitude = 2000;
+        parameter Real HMIII_Pulse_startTime = 0.0;
+        parameter Real HMIII_Pulse_Up_Width = 10; // percentage of period
+        parameter Real HMIII_Pulse_Down_Width = 7.5; // percentage of period
+        // Pulse generators
+        Modelica.Blocks.Sources.Pulse PulseGeneratorUp(period = HMIII_Pulse_Period, amplitude=HMIII_Pulse_Amplitude, offset=RPM_c, width=HMIII_Pulse_Up_Width, startTime = HMIII_Pulse_startTime + HMIII_Pulse_Period*HMIII_Pulse_Down_Width/100);
+        Modelica.Blocks.Sources.Pulse PulseGeneratorDown(period= HMIII_Pulse_Period, amplitude=HMIII_Pulse_Amplitude, offset=0, width=HMIII_Pulse_Down_Width, startTime=HMIII_Pulse_Period);
+        // Inlet/Outlet
         Mathcard.Library.Connectors.Orifice Inlet annotation(
           Placement(visible = true, transformation(origin = {0.0, 60.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0), iconTransformation(origin = {0.0, 80.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
         Mathcard.Library.Connectors.Orifice Outlet annotation(
