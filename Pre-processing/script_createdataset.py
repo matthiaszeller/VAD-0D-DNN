@@ -1,19 +1,31 @@
+"""Run this script directly in the folder containing outputs/ and parameters.txt,
+this automatically load the files. Alternatively, you can setup paths in setup_preprocessing.py
+
+WARNING: DO NOT FORGET TO SETUP TIME DISCRETIZATION IN setup_preprocessing.py
+"""
+
 from buildingspy.io.outputfile import Reader
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import os
 from natsort import natsorted
+from setup_preprocessing import *
+import scipy.io as sio
 
 
 def extract_results(varname, reader):
-    """reader must be an instance of buildingspy.io.outputfile.Reader"""
+    """reader must be an instance of buildingspy.io.outputfile.Reader
+    :return: (t, signal)
+    """
     return reader.values(varname)
 
 
 def time_range(var, t, t_min, t_max):
+    """
+    :return: t, signal
+    """
     indices = np.where(np.logical_and(t >= t_min, t <= t_max))
-    return var[indices], t[indices]
+    return t[indices], var[indices]
 
 
 def myfft(signal):
@@ -84,14 +96,19 @@ def get_constant_time_steps(t, signal, dt):
     """t in seconds, dt in seconds"""
     df = pd.DataFrame(index = pd.to_datetime(t * 1e9)) # to nanosecond
     df['signal'] = signal
-    df = df.resample('{}ms'.format(dt*1000)).mean()
+    # Resample to get constant time steps
+    # NOTE/ TODO: this is probably not the best way, we should use interpolate only
+    # but this creates ValueError: cannot reindex a duplicate axis
+    df = df.resample('{}ms'.format(dt*1000)).mean().interpolate('linear')
+    # Shift
     df.index -= df.index[0]
+    # Create array for time
     newtime = df.index.microseconds * 1e-6 + df.index.seconds
     return newtime.values, df['signal'].values
 
 
 def perform_fft(signal, t, dt):
-    """Equivalent of performmyfftonsignal"""
+    """Equivalent of performmyfftonsignal.m"""
 
     t, indices = np.unique(t, return_index=True)
     signal = signal[indices]
@@ -108,21 +125,63 @@ def perform_fft(signal, t, dt):
 
 
 if __name__ == '__main__':
+    # Manage paths
+    if path_params is None or path_mats is None:
+        path_params = 'parameters.txt'
+        path_mats = 'outputs/'
 
-    input_vars = ['SystemicArteries.PC', 'PulmonaryArteries.PC']
-    p = '/media/maousi/Data/tmp/simulations_2020_03_21/outputs'
-    dircontent = os.listdir(p)
+    if not os.path.exists(path_mats) or not os.path.exists(path_params):
+        raise Exception('Paths are incorrect.')
+
+    # Create the list of files
     files = []
-    for f in dircontent:
+    for f in os.listdir(path_mats):
         if f.endswith('.mat'):
             files.append(f)
 
-    # Sort files in natural order, this is CRITICAL since data extracted from files
+    # Sort files in natural order
+    # This is CRITICAL since data extracted from files
     # must match the parameters in the file parameters.txt (which obviously uses natural ordering)
     files = natsorted(files)
-    X = np.zeros((len(files), len(input_vars), ))
+    Nfile = len(files)
 
-    for f in files:
-        reader = Reader(os.path.join(p, f), 'dymola')
-        for i in range(len(input_vars)):
-            pass
+    # ================ CREATE DNN INPUT DATA X.mat
+    for i, f in enumerate(files):
+        print(f'Parsing input file {i}/{Nfile} {f}')
+        reader = Reader(os.path.join(path_mats, f), 'dymola')
+
+        for j, var in enumerate(input_vars):
+            # Read the time series corresponding to var in the .mat file
+            t, signal = extract_results(var, reader)
+            # Get values within tsub_min, tsub_max
+            t, signal = time_range(signal, t, tsub_min, tsub_max)
+            # Fourier transform
+            y, aks, bks, T, t, signal = perform_fft(signal, t, dt)
+            # Some bks are always zero
+            bks = bks[abs(bks) > 1e-15]
+
+            # Instanciate null tensor
+            if i == 0 and j == 0:
+                n = len(aks) + len(bks)
+                X = np.zeros((Nfile, len(input_vars), n))
+
+            # Fill in values
+            X[i, j, :] = np.append(aks, bks)
+
+    # Save input data
+    sio.savemat('X.mat', mdict={'X': X})
+    print('Written X.mat')
+
+    # ================= CREATE DNN TARGET DATA Y.mat
+    print('Extracting target data')
+
+    Y = pd.read_csv(path_params)
+    # Remove column 'n'
+    Y.drop('n', axis=1, inplace=True)
+    # Extract only the values (no header)
+    Y = Y.values
+    # Save as .mat file
+    sio.savemat('Y.mat', mdict={'Y': Y})
+    print('Written Y.mat')
+
+    print('Done!')

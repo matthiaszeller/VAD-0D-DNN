@@ -102,7 +102,10 @@ Note: find the diagram below to visualize the data flow
 1. Once the simulation is finished, you can move `log.txt` to `output_folder`. If one needs to check something
    later, one can find it in the log file.
 
-1. Modify [Pre-processing/setup.m](Pre-processing/setup.m) to setup the paths. 
+1. **NOTE: you can use Python for the pre-processing step. Go to step 9 to use Python**. Note that the Python script is slower, but it is useful in
+some cases when the Matlab code doesn't work. Matlab works for simulation time = 20s, dt = 0.04s. Reported issue: simulation time 30s, dt = 0.015.
+
+1. **Preprocessing with MATLAB**. Modify [Pre-processing/setup.m](Pre-processing/setup.m) to setup the paths. 
     * `pathmats` should target the subdirectory `outputs/` located in the directory created
       by [Simulation_script/launch_openmodelica.py](Simulation_script/launch_openmodelica.py)
     * `pathparams` should target the file `parameters.txt` located in the directory created
@@ -114,6 +117,13 @@ Note: find the diagram below to visualize the data flow
 1. Move `X.mat` and `Y.mat` in the `output_folder` (the one mentionned in steps 3, 4, 5) 
    to group everything together. If you are using Octave, you have to convert the files to binary 
    format first by using `save X.mat -v7` and `save Y.mat -v7`. 
+
+1. **Preprocessing with Python** (skip this step if you used Matlab). 
+    1. Setup time discretization in [Pre-processing/setup_preprocessing.py](Pre-processing/setup_preprocessing.py)
+    1. `cd` in the `output_folder`
+    1. Run [Pre-processing/script_createdataset.py](Pre-processing/script_createdataset.py).
+   It will automatically find `parameters.txt` and `outputs/`
+    1. It creates `X.mat` and `Y.mat` in the working directory. 
 
 1. `cd` in the `output_folder` and create a directory that will contain data generated
    by the deep neural network, e.g. `mkdir dnn`. At this point, the `output_folder` has the following hierarchy:
