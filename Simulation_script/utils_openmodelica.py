@@ -85,7 +85,7 @@ def runSimulation(N, param_lst, output_folder, file, LVAD):
     print("loadFile(\"{}\")".format(file))
     runcmd(omc, "loadFile(\"{}\")".format(file), env)
     runcmd(omc, "instantiateModel({})".format(model_name), env)
-    runcmd(omc, "simulate({}, stopTime=20.0, numberOfIntervals=500, \
+    runcmd(omc, "simulate({}, stopTime=30.0, numberOfIntervals=2000, \
     simflags=\"-emit_protected\", outputFormat=\"mat\")".format(model_name), env)
     ###############################
     # 5. Prepare the simulation
@@ -161,7 +161,7 @@ def runTestSimulation(Ytest, Ytest_pred, param_lst, output_dnn_test, modelica_fi
     runcmd(omc, "loadModel(Modelica)", env)
     runcmd(omc, "loadFile(\"{}\")".format(modelica_file_path), env)
     runcmd(omc, "instantiateModel({})".format(model_name), env)
-    runcmd(omc, "simulate({}, stopTime=20.0, numberOfIntervals=500, \
+    runcmd(omc, "simulate({}, stopTime=30.0, numberOfIntervals=2000, \
     simflags=\"-emit_protected\", outputFormat=\"mat\")".format(model_name), env)
 
     # ======== PREPARE SIMULATION
