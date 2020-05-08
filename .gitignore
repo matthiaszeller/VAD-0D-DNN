@@ -4,6 +4,7 @@
 *.ipynb_checkpoints*
 # Notebook conversion (to PDF)
 notebooks/converted/
+*.pdf
 
 # Pycharm config files
 *.xml
@@ -22,3 +23,4 @@ notebooks/converted/
 
 # Octave
 octave-workspace
+
