@@ -88,7 +88,7 @@ package Mathcard "Library of components to describe the Cardiovascular system an
             der(deltaR) = 1 / ATau * ((-deltaR) + sigmaR);
             R = RRef0 + deltaR;
             annotation(
-              Icon(coordinateSystem(extent = {{-100.0, -100.0}, {100.0, 100.0}}, preserveAspectRatio = true, initialScale = 0.1, grid = {10, 10}), graphics = {Text(visible = true, origin = {30.0, 40.0}, fillPattern = FillPattern.Solid, extent = {{-10.0, -10.0}, {10.0, 10.0}}, textString = "A", fontName = "Arial"), Rectangle(visible = true, fillColor = {204, 204, 204}, fillPattern = FillPattern.HorizontalCylinder, extent = {{-70.0, -30.0}, {70.0, 30.0}})}));
+              Icon(coordinateSystem( initialScale = 0.1, grid = {10, 10}), graphics = {Rectangle(fillColor = {204, 204, 204}, fillPattern = FillPattern.HorizontalCylinder, extent = {{-70, -30}, {70, 30}})}));
           end CRL_LP_AR;
           annotation(
             Icon(coordinateSystem(extent = {{-100, 100}, {100, -100}}, preserveAspectRatio = true, initialScale = 0.1, grid = {10, 10}), graphics = {Rectangle(visible = true, fillColor = {235, 235, 235}, fillPattern = FillPattern.Solid, extent = {{-100, -100}, {80, 50}}), Polygon(visible = true, fillColor = {210, 210, 210}, fillPattern = FillPattern.Solid, points = {{-100, 50}, {-80, 70}, {100, 70}, {80, 50}, {-100, 50}}), Polygon(visible = true, fillColor = {210, 210, 210}, fillPattern = FillPattern.Solid, points = {{100, 70}, {100, -80}, {80, -100}, {80, 50}, {100, 70}}), Text(visible = true, fillColor = {0, 0, 255}, extent = {{-85, -85}, {65, 35}}, textString = "Autoregulation", fontName = "Arial"), Text(visible = true, fillColor = {255, 0, 0}, extent = {{-120, 73}, {120, 122}}, textString = "%name", fontName = "Arial")}),
@@ -375,7 +375,7 @@ package Mathcard "Library of components to describe the Cardiovascular system an
         Mathcard.Library.Connectors.Orifice Outlet "Outlet node" annotation(
           Placement(visible = true, transformation(origin = {80.3926, -0.5088}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0), iconTransformation(origin = {80.0, 0.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
         annotation(
-          Icon(coordinateSystem(extent = {{-100.0, -100.0}, {100.0, 100.0}}, preserveAspectRatio = true, initialScale = 0.1, grid = {10, 10}), graphics = {Text(visible = true, origin = {-80.0, 30.0}, fillPattern = FillPattern.Solid, extent = {{-10.0, -10.0}, {10.0, 10.0}}, textString = "I", fontName = "Arial"), Text(visible = true, origin = {80.0, 30.0}, fillPattern = FillPattern.Solid, extent = {{-10.0, -10.0}, {10.0, 10.0}}, textString = "O", fontName = "Arial")}));
+          Icon(coordinateSystem(initialScale = 0.1, grid = {10, 10})));
       end I1O1;
 
       connector RealInput
@@ -479,7 +479,7 @@ Connector with one input signal of type Real.
           Q = -Outlet.Q;
           Q = if noEvent(Inlet.P > Outlet.P) then (Inlet.P - Outlet.P) / R else 0;
           annotation(
-            Icon(coordinateSystem(extent = {{-100.0, -100.0}, {100.0, 100.0}}, preserveAspectRatio = true, initialScale = 0.1, grid = {10, 10}), graphics = {Text(visible = true, origin = {30.0, 80.0}, fillPattern = FillPattern.Solid, extent = {{-10.0, -10.0}, {10.0, 10.0}}, textString = "I", fontName = "Arial"), Text(visible = true, origin = {30.0, -80.0}, fillPattern = FillPattern.Solid, extent = {{-10.0, -10.0}, {10.0, 10.0}}, textString = "O", fontName = "Arial"), Rectangle(visible = true, fillColor = {255, 255, 255}, extent = {{-40.0, -70.0}, {40.0, 70.0}}), Line(visible = true, origin = {22.5, 0.0}, points = {{17.5, 10.0}, {9.5553, 10.0}, {-2.5, -0.0}, {-12.5, -20.0}}, color = {153, 153, 153}, thickness = 5), Line(visible = true, points = {{0.0, 70.0}, {0.0, -70.0}}), Line(visible = true, origin = {-22.5, 0.0}, points = {{-17.5, 10.0}, {-9.5553, 10.0}, {2.5, -0.0}, {12.5, -20.0}}, color = {153, 153, 153}, thickness = 5), Line(visible = true, origin = {-2.5, 5.0}, points = {{-7.5, 5.0}, {12.5, 5.0}, {2.5, -15.0}, {-7.5, 5.0}}, thickness = 1)}));
+            Icon(coordinateSystem( initialScale = 0.1, grid = {10, 10}), graphics = {Rectangle(fillColor = {255, 255, 255}, extent = {{-40, -70}, {40, 70}}), Line(origin = {22.5, 0}, points = {{17.5, 10}, {9.5553, 10}, {-2.5, 0}, {-12.5, -20}}, color = {153, 153, 153}, thickness = 5), Line(points = {{0, 70}, {0, -70}}), Line(origin = {-22.5, 0}, points = {{-17.5, 10}, {-9.5553, 10}, {2.5, 0}, {12.5, -20}}, color = {153, 153, 153}, thickness = 5), Line(origin = {-2.5, 5}, points = {{-7.5, 5}, {12.5, 5}, {2.5, -15}, {-7.5, 5}}, thickness = 1)}));
         end Valve_AV;
 
         model Valve_VC "Implements the Left Atrium Model"
@@ -497,7 +497,7 @@ Connector with one input signal of type Real.
           Q = -Outlet.Q;
           Q = if Inlet.P > Outlet.P then (Inlet.P - Outlet.P) / (kR * Inlet.P) else 0;
           annotation(
-            Icon(coordinateSystem(extent = {{-100.0, -100.0}, {100.0, 100.0}}, preserveAspectRatio = true, initialScale = 0.1, grid = {10, 10}), graphics = {Rectangle(visible = true, fillColor = {255, 255, 255}, extent = {{-40.0, -70.0}, {40.0, 70.0}}), Line(visible = true, origin = {22.5, 0.0}, points = {{17.5, 10.0}, {9.5553, 10.0}, {-2.5, -0.0}, {-12.5, -20.0}}, color = {153, 153, 153}, thickness = 5), Line(visible = true, points = {{0.0, 70.0}, {0.0, -70.0}}), Line(visible = true, origin = {-2.5, 5.0}, points = {{-7.5, 5.0}, {12.5, 5.0}, {2.5, -15.0}, {-7.5, 5.0}}, thickness = 1), Line(visible = true, origin = {-22.5, 0.0}, points = {{-17.5, 10.0}, {-9.5553, 10.0}, {2.5, -0.0}, {12.5, -20.0}}, color = {153, 153, 153}, thickness = 5), Text(visible = true, origin = {30.0, 80.0}, fillPattern = FillPattern.Solid, extent = {{-10.0, -10.0}, {10.0, 10.0}}, textString = "I", fontName = "Arial"), Text(visible = true, origin = {30.0, -80.0}, fillPattern = FillPattern.Solid, extent = {{-10.0, -10.0}, {10.0, 10.0}}, textString = "O", fontName = "Arial")}));
+            Icon(coordinateSystem( initialScale = 0.1, grid = {10, 10}), graphics = {Rectangle(fillColor = {255, 255, 255}, extent = {{-40, -70}, {40, 70}}), Line(origin = {22.5, 0}, points = {{17.5, 10}, {9.5553, 10}, {-2.5, 0}, {-12.5, -20}}, color = {153, 153, 153}, thickness = 5), Line(points = {{0, 70}, {0, -70}}), Line(origin = {-2.5, 5}, points = {{-7.5, 5}, {12.5, 5}, {2.5, -15}, {-7.5, 5}}, thickness = 1), Line(origin = {-22.5, 0}, points = {{-17.5, 10}, {-9.5553, 10}, {2.5, 0}, {12.5, -20}}, color = {153, 153, 153}, thickness = 5)}));
         end Valve_VC;
         annotation(
           Icon(coordinateSystem(extent = {{-100, 100}, {100, -100}}, preserveAspectRatio = true, initialScale = 0.1, grid = {10, 10}), graphics = {Rectangle(visible = true, fillColor = {235, 235, 235}, fillPattern = FillPattern.Solid, extent = {{-100, -100}, {80, 50}}), Polygon(visible = true, fillColor = {210, 210, 210}, fillPattern = FillPattern.Solid, points = {{-100, 50}, {-80, 70}, {100, 70}, {80, 50}, {-100, 50}}), Polygon(visible = true, fillColor = {210, 210, 210}, fillPattern = FillPattern.Solid, points = {{100, 70}, {100, -80}, {80, -100}, {80, 50}, {100, 70}}), Text(visible = true, fillColor = {0, 0, 255}, extent = {{-85, -85}, {65, 35}}, textString = "Autoregulation", fontName = "Arial"), Text(visible = true, fillColor = {255, 0, 0}, extent = {{-120, 73}, {120, 122}}, textString = "%name", fontName = "Arial")}),
@@ -530,7 +530,7 @@ Connector with one input signal of type Real.
           der(V) = Qin - Qout;
           annotation(
             Diagram(coordinateSystem(extent = {{-100.0, -100.0}, {100.0, 100.0}}, preserveAspectRatio = true, initialScale = 0.1, grid = {10, 10})),
-            Icon(coordinateSystem(extent = {{-100.0, -100.0}, {100.0, 100.0}}, preserveAspectRatio = true, initialScale = 0.1, grid = {10, 10}), graphics = {Ellipse(visible = true, origin = {0.0, 0.0}, lineColor = {128, 0, 0}, fillColor = {255, 0, 0}, fillPattern = FillPattern.Sphere, extent = {{-70.0, -70.0}, {70.0, 70.0}}), Text(visible = true, origin = {30.0, 80.0}, fillPattern = FillPattern.Solid, extent = {{-10.0, -10.0}, {10.0, 10.0}}, textString = "I", fontName = "Arial"), Text(visible = true, origin = {30.0, -80.0}, fillPattern = FillPattern.Solid, extent = {{-10.0, -10.0}, {10.0, 10.0}}, textString = "O", fontName = "Arial")}));
+            Icon(coordinateSystem( initialScale = 0.1, grid = {10, 10}), graphics = {Ellipse(lineColor = {128, 0, 0}, fillColor = {255, 0, 0}, fillPattern = FillPattern.Sphere, extent = {{-70, -70}, {70, 70}}, endAngle = 360)}));
         end Atrium;
 
         model Ventricle "Model for a Ventricular Cardiac Chamber"
@@ -605,7 +605,7 @@ Connector with one input signal of type Real.
           HR = 60 / T;
           annotation(
             Diagram(coordinateSystem(extent = {{-100.0, -100.0}, {100.0, 100.0}}, preserveAspectRatio = true, initialScale = 0.1, grid = {10, 10})),
-            Icon(coordinateSystem(extent = {{-100.0, -100.0}, {100.0, 100.0}}, preserveAspectRatio = true, initialScale = 0.1, grid = {10, 10}), graphics = {Text(visible = true, origin = {30.0, 80.0}, fillPattern = FillPattern.Solid, extent = {{-10.0, -10.0}, {10.0, 10.0}}, textString = "I", fontName = "Arial"), Text(visible = true, origin = {30.0, -80.0}, fillPattern = FillPattern.Solid, extent = {{-10.0, -10.0}, {10.0, 10.0}}, textString = "O", fontName = "Arial"), Text(visible = true, origin = {90.0, 50.0}, fillPattern = FillPattern.Solid, extent = {{-10.0, -10.0}, {10.0, 10.0}}, textString = "V", fontName = "Arial"), Text(visible = true, origin = {90.0, -50.0}, fillPattern = FillPattern.Solid, extent = {{-10.0, -10.0}, {10.0, 10.0}}, textString = "S", fontName = "Arial"), Rectangle(visible = true, lineColor = {128, 0, 0}, fillColor = {255, 0, 0}, fillPattern = FillPattern.Sphere, extent = {{-80.0, -70.0}, {80.0, 70.0}})}));
+            Icon(coordinateSystem( initialScale = 0.1, grid = {10, 10}), graphics = {Rectangle(lineColor = {128, 0, 0}, fillColor = {255, 0, 0}, fillPattern = FillPattern.Sphere, extent = {{-80, -70}, {80, 70}})}));
         end Ventricle;
         annotation(
           Icon(coordinateSystem(extent = {{-100, 100}, {100, -100}}, preserveAspectRatio = true, initialScale = 0.1, grid = {10, 10}), graphics = {Rectangle(visible = true, fillColor = {235, 235, 235}, fillPattern = FillPattern.Solid, extent = {{-100, -100}, {80, 50}}), Polygon(visible = true, fillColor = {210, 210, 210}, fillPattern = FillPattern.Solid, points = {{-100, 50}, {-80, 70}, {100, 70}, {80, 50}, {-100, 50}}), Polygon(visible = true, fillColor = {210, 210, 210}, fillPattern = FillPattern.Solid, points = {{100, 70}, {100, -80}, {80, -100}, {80, 50}, {100, 70}}), Text(visible = true, fillColor = {0, 0, 255}, extent = {{-85, -85}, {65, 35}}, textString = "Autoregulation", fontName = "Arial"), Text(visible = true, fillColor = {255, 0, 0}, extent = {{-120, 73}, {120, 122}}, textString = "%name", fontName = "Arial")}),
@@ -746,7 +746,7 @@ Connector with one input signal of type Real.
         //Q = 0;
         annotation(
           Diagram(coordinateSystem(extent = {{-148.5, -105.0}, {148.5, 105.0}}, preserveAspectRatio = true, initialScale = 0.1, grid = {10, 10})),
-          Icon(coordinateSystem(extent = {{-100.0, -100.0}, {100.0, 100.0}}, preserveAspectRatio = true, initialScale = 0.1, grid = {10, 10}), graphics = {Rectangle(visible = true, fillColor = {255, 128, 0}, fillPattern = FillPattern.Solid, extent = {{-20.0, -70.0}, {20.0, 70.0}}), Text(visible = true, fillColor = {128, 0, 0}, fillPattern = FillPattern.Solid, extent = {{-16.8042, -10.5833}, {16.8042, 10.5833}}, textString = "VAD", fontName = "Arial"), Text(visible = true, origin = {30.0, 80.0}, fillPattern = FillPattern.Solid, extent = {{-10.0, -10.0}, {10.0, 10.0}}, textString = "I", fontName = "Arial"), Text(visible = true, origin = {30.0, -80.0}, fillPattern = FillPattern.Solid, extent = {{-10.0, -10.0}, {10.0, 10.0}}, textString = "O", fontName = "Arial")}));
+          Icon(coordinateSystem( initialScale = 0.1, grid = {10, 10}), graphics = {Rectangle(fillColor = {255, 128, 0}, fillPattern = FillPattern.Solid, extent = {{-20, -70}, {20, 70}}), Text(fillColor = {128, 0, 0}, fillPattern = FillPattern.Solid, extent = {{-16.8042, -10.5833}, {16.8042, 10.5833}}, textString = "VAD", fontName = "Arial")}));
       end VAD2;
       annotation(
         Icon(coordinateSystem(extent = {{-100, 100}, {100, -100}}, preserveAspectRatio = true, initialScale = 0.1, grid = {10, 10}), graphics = {Rectangle(visible = true, fillColor = {235, 235, 235}, fillPattern = FillPattern.Solid, extent = {{-100, -100}, {80, 50}}), Polygon(visible = true, fillColor = {210, 210, 210}, fillPattern = FillPattern.Solid, points = {{-100, 50}, {-80, 70}, {100, 70}, {80, 50}, {-100, 50}}), Polygon(visible = true, fillColor = {210, 210, 210}, fillPattern = FillPattern.Solid, points = {{100, 70}, {100, -80}, {80, -100}, {80, 50}, {100, 70}}), Text(visible = true, fillColor = {0, 0, 255}, extent = {{-85, -85}, {65, 35}}, textString = "Devices", fontName = "Arial"), Text(visible = true, fillColor = {255, 0, 0}, extent = {{-120, 73}, {120, 122}}, textString = "%name", fontName = "Arial")}),
@@ -1204,15 +1204,15 @@ Connector with one input signal of type Real.
         model Ursino1998Model_VAD2 "HMIII VAD model"
           // EXTEND THE SUPERCLASS
           // CHOOSE THE HEART FAILURE LEVEL (MHF / SHF)
-          //extends Mathcard.Applications.Ursino1998.HMIII.ModelParametersMHF;
-          extends Mathcard.Applications.Ursino1998.ModelParametersNH;
+          extends Mathcard.Applications.Ursino1998.HMIII.ModelParametersMHF;
+          //extends Mathcard.Applications.Ursino1998.ModelParametersNH;
           // IMPORT MATHCARD LIBRARY
           import Mathcard.Library.*;
           // ============================
           //
           // VAD DEVICE
           Mathcard.Library.Devices.VAD2 LVAD(RPM_c = Param_LVAD_RPM) annotation(
-            Placement(visible = true, transformation(origin = {80.0, -20.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
+            Placement(visible = true, transformation(origin = {70, -20}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
           // LEFT ATRIUM
           Mathcard.Library.Heart.AutoregulatingChambers.Atrium LeftAtrium(C = Param_LeftAtrium_C, V0 = Param_LeftAtrium_V0, Vu0 = Param_LeftAtrium_Vu0) annotation(
             Placement(visible = true, transformation(origin = {30.0, 30.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
@@ -1227,10 +1227,10 @@ Connector with one input signal of type Real.
             Placement(visible = true, transformation(origin = {30.0, -30.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
           // SYSTEMIC ARTERIES
           Mathcard.Library.Vessels.I1O1.Linear.CRL_LP SystemicArteries(R = Param_SystemicArteries_R, I = Param_SystemicArteries_I, C = Param_SystemicArteries_C, V0 = Param_SystemicArteries_V0, Vu0 = Param_SystemicArteries_Vu0) annotation(
-            Placement(visible = true, transformation(origin = {70.0, -80.0}, extent = {{10.0, -10.0}, {-10.0, 10.0}}, rotation = 0)));
+            Placement(visible = true, transformation(origin = {70, -80}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
           // SPLANCHNIC PERIPHERAL CIRCULATION
           Mathcard.Library.Vessels.I1O1.Autoregulating.CRL_LP_AR SplanchnicPeripheralCirculation(R0 = Param_SplanchnicPeripheralCirculation_R0, RRef0 = Param_SplanchnicPeripheralCirculation_RRef0, AGain = Param_SplanchnicPeripheralCirculation_AGain, ADelay = Param_SplanchnicPeripheralCirculation_ADelay, ATau = Param_SplanchnicPeripheralCirculation_ATau, I = Param_SplanchnicPeripheralCirculation_I, C = Param_SplanchnicPeripheralCirculation_C, V0 = Param_SplanchnicPeripheralCirculation_V0, Vu0 = Param_SplanchnicPeripheralCirculation_Vu0) annotation(
-            Placement(visible = true, transformation(origin = {0.0, -90.0}, extent = {{10.0, -10.0}, {-10.0, 10.0}}, rotation = 0)));
+            Placement(visible = true, transformation(origin = {0, -90}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
           // EXTRASPLANCHNIC PERIPHERAL CIRCULATION
           Mathcard.Library.Vessels.I1O1.Autoregulating.CRL_LP_AR ExtraSplanchnicPeripheralCirculation(R0 = Param_ExtraSplanchnicPeripheralCirculation_R0, RRef0 = Param_ExtraSplanchnicPeripheralCirculation_RRef0, AGain = Param_ExtraSplanchnicPeripheralCirculation_AGain, ADelay = Param_ExtraSplanchnicPeripheralCirculation_ADelay, ATau = Param_ExtraSplanchnicPeripheralCirculation_ATau, I = Param_ExtraSplanchnicPeripheralCirculation_I, C = Param_ExtraSplanchnicPeripheralCirculation_C, V0 = Param_ExtraSplanchnicPeripheralCirculation_V0, Vu0 = Param_ExtraSplanchnicPeripheralCirculation_Vu0) annotation(
             Placement(visible = true, transformation(origin = {0.0, -70.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = -180)));
@@ -1239,7 +1239,7 @@ Connector with one input signal of type Real.
             Placement(visible = true, transformation(origin = {-70.0, -90.0}, extent = {{10.0, -10.0}, {-10.0, 10.0}}, rotation = 0)));
           // EXTRASPLANCHNIC VEINS
           Mathcard.Library.Vessels.I1O1.Autoregulating.CRL_LP_AVu ExtraSplanchnicVeins(R = Param_ExtraSplanchnicVeins_R, I = Param_ExtraSplanchnicVeins_I, C = Param_ExtraSplanchnicVeins_C, V0 = Param_ExtraSplanchnicVeins_V0, Vu0 = Param_ExtraSplanchnicVeins_Vu0, VuRef0 = Param_ExtraSplanchnicVeins_VuRef0, AGain = Param_ExtraSplanchnicVeins_AGain, ADelay = Param_ExtraSplanchnicVeins_ADelay, ATau = Param_ExtraSplanchnicVeins_ATau) annotation(
-            Placement(visible = true, transformation(origin = {-70.0, -70.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = -180)));
+            Placement(visible = true, transformation(origin = {-70, -70}, extent = {{-10, -10}, {10, 10}}, rotation = -180)));
           // RIGHT ATRIUM
           Mathcard.Library.Heart.AutoregulatingChambers.Atrium RightAtrium(C = Param_RightAtrium_C, V0 = Param_RightAtrium_V0, Vu0 = Param_RightAtrium_Vu0) annotation(
             Placement(visible = true, transformation(origin = {-30.0, 30.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
@@ -1253,8 +1253,8 @@ Connector with one input signal of type Real.
           Mathcard.Library.Heart.Valves.Valve_VC PulmonaryValve(kR = Param_PulmonaryValve_kR) annotation(
             Placement(visible = true, transformation(origin = {-30.0, -30.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
           // PULMONARY ARTERIES
-          Mathcard.Library.Vessels.I1O1.Linear.CRL_LP PulmonaryArteries(R = Param_PulmonaryArteries_R, I = Param_PulmonaryArteries_I, C = Param_PulmonaryArteries_C, V0 = Param_PulmonaryArteries_V0, Vu0 = Param_PulmonaryArteries_Vu0) annotation(
-            Placement(visible = true, transformation(origin = {-50.0, 80.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = -360)));
+          Mathcard.Library.Vessels.I1O1.Linear.CRL_LP PulmonaryArteries(R = Param_PulmonaryArteries_R, I = Param_PulmonaryArteries_I, C = Param_PulmonaryArteries_C, V0 = Param_PulmonaryArteries_V0, Vu0 = Param_PulmonaryArteries_Vu0) "Test" annotation(
+            Placement(visible = true, transformation(origin = {-50, 80}, extent = {{-10, -10}, {10, 10}}, rotation = -360)));
           // PULMONARY PERIPHERAL CIRCULATION
           Mathcard.Library.Vessels.I1O1.Linear.CRL_LP PulmonaryPeriphericalCirculation(R = Param_PulmonaryPeriphericalCirculation_R, I = Param_PulmonaryPeriphericalCirculation_I, C = Param_PulmonaryPeriphericalCirculation_C, V0 = Param_PulmonaryPeriphericalCirculation_V0, Vu0 = Param_PulmonaryPeriphericalCirculation_Vu0) annotation(
             Placement(visible = true, transformation(origin = {0.0, 80.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = 0)));
@@ -1265,50 +1265,50 @@ Connector with one input signal of type Real.
           Mathcard.Library.AutoregulationCenters.Autoregulation_Center AutoregulationCenter(TauP = Param_AutoregulationCenter_TauP, TauZ = Param_AutoregulationCenter_TauZ, Pn = Param_AutoregulationCenter_Pn, ka = Param_AutoregulationCenter_ka, fmin = Param_AutoregulationCenter_fmin, fmax = Param_AutoregulationCenter_fmax, fesinf = Param_AutoregulationCenter_fesinf, fes0 = Param_AutoregulationCenter_fes0, fesmin = Param_AutoregulationCenter_fesmin, kes = Param_AutoregulationCenter_kes, fev0 = Param_AutoregulationCenter_fev0, fevinf = Param_AutoregulationCenter_fevinf, fcs0 = Param_AutoregulationCenter_fcs0, kev = Param_AutoregulationCenter_kev) annotation(
             Placement(visible = true, transformation(origin = {0.0, -30.0}, extent = {{-10.0, -10.0}, {10.0, 10.0}}, rotation = -630)));
         equation
-          connect(LVAD.Inlet, MitralicValve.Outlet) annotation(
-            Line(visible = true, points = {{80.0, -12.0}, {80.0, 2.0}, {30.0, 2.0}}, color = {255, 0, 0}, thickness = 2));
-          connect(LVAD.Outlet, SystemicArteries.Inlet) annotation(
-            Line(visible = true, points = {{80.0, -28.0}, {80.0, -50.0}, {90.0, -50.0}, {90.0, -80.0}, {78.0, -80.0}}, color = {255, 0, 0}, thickness = 2));
+  connect(LVAD.Inlet, MitralicValve.Outlet) annotation(
+            Line(points = {{70, -12}, {70, 2}, {30, 2}}, color = {255, 0, 0}, thickness = 0.5));
+  connect(LVAD.Outlet, SystemicArteries.Inlet) annotation(
+            Line(points = {{70, -28}, {70, -50}, {90, -50}, {90, -80}, {78, -80}}, color = {255, 0, 0}, thickness = 0.5));
           connect(AutoregulationCenter.Active_fes, RightVentricle.Active_fes) annotation(
-            Line(visible = true, points = {{-3.0, -22.0}, {-3.0, -13.0}, {-21.0, -13.0}}, color = {0, 128, 0}, thickness = 1));
+            Line(points = {{-3, -22}, {-3, -13}, {-21, -13}}, color = {0, 128, 0}));
           connect(AutoregulationCenter.Active_fes, SplanchnicPeripheralCirculation.Active_fes) annotation(
-            Line(visible = true, origin = {-2.2398, -21.5986}, points = {{-0.76, -0.401}, {-0.76, 8.599}, {-11.994, 8.599}, {-11.994, -58.401}, {2.2398, -58.4014}, {2.24, -64.401}}, color = {0, 128, 0}, thickness = 1));
+            Line(points = {{-2.9998, -21.9996}, {-2.9998, -12.9996}, {-14.2338, -12.9996}, {-14.2338, -86}, {0, -86}}, color = {0, 128, 0}));
           connect(AutoregulationCenter.Active_fes, ExtraSplanchnicPeripheralCirculation.Active_fes) annotation(
-            Line(visible = true, origin = {1.0, 0.0}, points = {{-4.0, -22.0}, {-4.0, -13.0}, {-16.0, -13.0}, {-16.0, -80.0}, {-1.0, -80.0}, {-1.0, -74.0}}, color = {0, 128, 0}, thickness = 1));
-          connect(AutoregulationCenter.Active_fes, ExtraSplanchnicVeins.Active_fes) annotation(
-            Line(visible = true, origin = {1.0, 0.0}, points = {{-4.0, -22.0}, {-4.0, -13.0}, {-16.0, -13.0}, {-16.0, -80.0}, {-71.0, -80.0}, {-71.0, -74.0}}, color = {0, 128, 0}, thickness = 1));
+            Line(points = {{-3, -22}, {-3, -13}, {-15, -13}, {-15, -80}, {0, -80}, {0, -74}}, color = {0, 128, 0}));
+  connect(AutoregulationCenter.Active_fes, ExtraSplanchnicVeins.Active_fes) annotation(
+            Line(points = {{-3, -22}, {-3, -13}, {-15, -13}, {-15, -80}, {-70, -80}, {-70, -74}}, color = {0, 128, 0}));
           connect(AutoregulationCenter.Active_fes, SplanchnicVeins.Active_fes) annotation(
-            Line(visible = true, origin = {23.6786, 38.8776}, points = {{-26.679, -60.878}, {-26.679, -51.878}, {-38.679, -51.878}, {-38.679, -118.878}, {-93.679, -118.878}, {-93.679, -124.878}}, color = {0, 128, 0}, thickness = 1));
+            Line(points = {{-3.0004, -22.0004}, {-3.0004, -13.0004}, {-15.0004, -13.0004}, {-15.0004, -80.0004}, {-70.0004, -80.0004}, {-70.0004, -86.0004}}, color = {0, 128, 0}));
           connect(AutoregulationCenter.Active_fev, RightVentricle.Active_fev) annotation(
-            Line(visible = true, points = {{3.0, -22.0}, {3.0, -7.0}, {-21.0, -7.0}}, color = {0, 255, 0}, thickness = 1));
+            Line(points = {{3, -22}, {3, -7}, {-21, -7}}, color = {0, 255, 0}));
           connect(AutoregulationCenter.Active_fev, LeftVentricle.Active_fev) annotation(
-            Line(visible = true, points = {{3.0, -22.0}, {3.0, -7.0}, {21.0, -7.0}}, color = {0, 255, 0}, thickness = 1));
+            Line(points = {{3, -22}, {3, -7}, {21, -7}}, color = {0, 255, 0}));
           connect(AutoregulationCenter.Active_fes, LeftVentricle.Active_fes) annotation(
-            Line(visible = true, points = {{-3.0, -22.0}, {-3.0, -13.0}, {21.0, -13.0}}, color = {0, 128, 0}, thickness = 1));
+            Line(points = {{-3, -22}, {-3, -13}, {21, -13}}, color = {0, 128, 0}));
           connect(AutoregulationCenter.PressureProbe, AorticValve.Outlet) annotation(
-            Line(visible = true, points = {{0.0, -38.0}, {30.0, -38.0}}, color = {255, 0, 255}, thickness = 1));
-          connect(ExtraSplanchnicVeins.Outlet, RightAtrium.Inlet) annotation(
-            Line(visible = true, origin = {77.7551, 55.6165}, points = {{-155.755, -125.617}, {-167.755, -125.617}, {-167.755, -5.617}, {-107.755, -5.617}, {-107.755, -17.617}}, color = {0, 128, 255}, thickness = 2));
+            Line(points = {{0, -38}, {30, -38}}, color = {255, 0, 255}));
+  connect(ExtraSplanchnicVeins.Outlet, RightAtrium.Inlet) annotation(
+            Line(points = {{-78, -70}, {-89.9999, -70}, {-89.9999, 49.9995}, {-29.9999, 49.9995}, {-29.9999, 37.9995}}, color = {0, 128, 255}, thickness = 0.5));
           connect(SplanchnicVeins.Outlet, RightAtrium.Inlet) annotation(
-            Line(visible = true, origin = {-63.176, -2.1599}, points = {{-14.824, -87.84}, {-26.824, -87.84}, {-26.824, 52.16}, {33.176, 52.16}, {33.176, 40.16}}, color = {0, 128, 255}, thickness = 2));
-          connect(ExtraSplanchnicPeripheralCirculation.Outlet, ExtraSplanchnicVeins.Inlet) annotation(
-            Line(visible = true, origin = {-35.0, -70.0}, points = {{27.0, 0.0}, {-27.0, 0.0}}, color = {0, 128, 255}, thickness = 2));
+            Line( points = {{-78, -89.9999}, {-90, -89.9999}, {-90, 50.0001}, {-30, 50.0001}, {-30, 38.0001}}, color = {0, 128, 255}, thickness = 0.5));
+  connect(ExtraSplanchnicPeripheralCirculation.Outlet, ExtraSplanchnicVeins.Inlet) annotation(
+            Line(points = {{-8, -70}, {-62, -70}}, color = {0, 128, 255}, thickness = 0.5));
           connect(SplanchnicPeripheralCirculation.Outlet, SplanchnicVeins.Inlet) annotation(
-            Line(visible = true, origin = {-35.0, -90.0}, points = {{27.0, 0.0}, {-27.0, 0.0}}, color = {0, 128, 255}, thickness = 2));
-          connect(SystemicArteries.Outlet, SplanchnicPeripheralCirculation.Inlet) annotation(
-            Line(visible = true, points = {{62.0, -80.0}, {50.0, -80.0}, {50.0, -90.0}, {8.0, -90.0}}, color = {255, 0, 0}, thickness = 2));
-          connect(SystemicArteries.Outlet, ExtraSplanchnicPeripheralCirculation.Inlet) annotation(
-            Line(visible = true, origin = {50.0, -75.0}, points = {{12.0, -5.0}, {0.0, -5.0}, {0.0, 5.0}, {-42.0, 5.0}}, color = {255, 0, 0}, thickness = 2));
-          connect(AorticValve.Outlet, SystemicArteries.Inlet) annotation(
-            Line(visible = true, origin = {73.4354, -42.1173}, points = {{-43.435, 4.117}, {-43.435, -7.883}, {16.565, -7.883}, {16.565, -37.883}, {4.565, -37.883}}, color = {255, 0, 0}, thickness = 2));
+            Line( points = {{-8, -90}, {-62, -90}}, color = {0, 128, 255}, thickness = 0.5));
+  connect(SystemicArteries.Outlet, SplanchnicPeripheralCirculation.Inlet) annotation(
+            Line(points = {{62, -80}, {50, -80}, {50, -90}, {8, -90}}, color = {255, 0, 0}, thickness = 0.5));
+  connect(SystemicArteries.Outlet, ExtraSplanchnicPeripheralCirculation.Inlet) annotation(
+            Line(points = {{62, -80}, {50, -80}, {50, -70}, {8, -70}}, color = {255, 0, 0}, thickness = 0.5));
+  connect(AorticValve.Outlet, SystemicArteries.Inlet) annotation(
+            Line(points = {{30.0004, -38.0003}, {30.0004, -50.0003}, {90.0004, -50.0003}, {90.0004, -80}, {78, -80}}, color = {255, 0, 0}, thickness = 0.5));
           connect(PulmonaryVeins.Outlet, LeftAtrium.Inlet) annotation(
-            Line(visible = true, points = {{58.0, 80.0}, {70.0, 80.0}, {70.0, 50.0}, {30.0, 50.0}, {30.0, 38.0}}, color = {255, 0, 0}, thickness = 2));
+            Line( points = {{58, 80}, {70, 80}, {70, 50}, {30, 50}, {30, 38}}, color = {255, 0, 0}, thickness = 0.5));
           connect(PulmonaryPeriphericalCirculation.Outlet, PulmonaryVeins.Inlet) annotation(
-            Line(visible = true, origin = {25.0, 80.0}, points = {{-17.0, 0.0}, {17.0, 0.0}}, color = {255, 0, 0}, thickness = 2));
-          connect(PulmonaryArteries.Outlet, PulmonaryPeriphericalCirculation.Inlet) annotation(
-            Line(visible = true, origin = {-25.0, 80.0}, points = {{-17.0, 0.0}, {17.0, 0.0}}, color = {0, 128, 255}, thickness = 2));
-          connect(PulmonaryValve.Outlet, PulmonaryArteries.Inlet) annotation(
-            Line(visible = true, origin = {19.0, -76.0}, points = {{-49.0, 38.0}, {-49.0, 26.0}, {-89.0, 26.0}, {-89.0, 156.0}, {-77.0, 156.0}}, color = {0, 128, 255}, thickness = 2));
+            Line( points = {{8, 80}, {42, 80}}, color = {255, 0, 0}, thickness = 0.5));
+  connect(PulmonaryArteries.Outlet, PulmonaryPeriphericalCirculation.Inlet) annotation(
+            Line(points = {{-42, 80}, {-8, 80}}, color = {0, 128, 255}, thickness = 0.5));
+  connect(PulmonaryValve.Outlet, PulmonaryArteries.Inlet) annotation(
+            Line(points = {{-30, -38}, {-30, -50}, {-70, -50}, {-70, 80}, {-58, 80}}, color = {0, 128, 255}, thickness = 0.5));
           connect(LeftVentricle.Outlet, AorticValve.Inlet) annotation(
             Line(visible = true, origin = {30.0, -20.6667}, points = {{0.0, 2.6667}, {0.0, -1.3333}, {0.0, -1.3333}}));
           connect(MitralicValve.Outlet, LeftVentricle.Inlet) annotation(
@@ -1323,15 +1323,15 @@ Connector with one input signal of type Real.
             Line(visible = true, points = {{-30.0, 22.0}, {-30.0, 18.0}}));
           annotation(
             experiment(StopTime = 200),
-            Diagram(coordinateSystem(extent = {{-100.0, -100.0}, {100.0, 100.0}}, preserveAspectRatio = true, initialScale = 0.1, grid = {10, 10})));
+            Diagram(coordinateSystem(initialScale = 0.1, grid = {10, 10})));
         end Ursino1998Model_VAD2;
 
         partial model ModelParameters "Abstract class regrouping common parameters"
           /* PUMP RPMs */
           //parameter Real Param_LVAD_RPM = 3000;
           //parameter Real Param_LVAD_RPM = 4000;
-          //parameter Real Param_LVAD_RPM = 5000;
-          parameter Real Param_LVAD_RPM = 6000;
+          parameter Real Param_LVAD_RPM = 5000;
+          //parameter Real Param_LVAD_RPM = 6000;
           //parameter Real Param_LVAD_RPM = 7000;
           //parameter Real Param_LVAD_RPM = 8000;
           //parameter Real Param_LVAD_RPM = 9000;
