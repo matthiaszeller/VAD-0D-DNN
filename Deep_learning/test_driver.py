@@ -47,7 +47,8 @@ if args.mode == 'train':
 
     # Launch DNN training
     try:
-        res = udl.train_dnn(perccoef, files_path=args.path, save_test_data=True, verbose=args.verbose)
+        res = udl.train_dnn(perccoef, files_path=args.path, save_test_data=True,
+                            verbose=args.verbose, selected_aks=args.selectedaks)
     except FileNotFoundError:
         print('\n<ERROR> X.mat or Y.mat was not found, you should use the --path argument.')
 

@@ -196,7 +196,31 @@ def test_dnn(model, Xtest, Ytest, normdata, param_lst,
     uo.runTestSimulation(Ytest=Ytest, Ytest_pred=Ypred, param_lst=param_lst,
                          output_dnn_test=output_dnn_test, modelica_file_path=modelica_file_path)
 
-def train_dnn(perccoef, files_path=None, save_test_data=True, verbose=False):
+def reduce(perc, array_length, selectedaks = None):
+    """Return a list of indices (i.e. use them by applying np.take) used to reduce number of input coeffs.
+    You can choose the extent of data reduction with:
+    - perc: percentage of coefficients to keep
+    - selectedaks: impose a given number of ak coefficients
+    Note that in both cases, there is one additional ak returned (b0=0, a0 =/= 0)
+    """
+    def get_b1_index(array_length):
+        if array_length % 2 == 0:
+            return int((array_length + 2) / 2)
+        return int((array_length + 1) / 2)
+
+    # b1_id = index of b1 coeff = number of aks
+    b1_id = get_b1_index(array_length)
+
+    if selectedaks is None:
+        selectedaks = int(np.floor(b1_id * perc))
+    else:
+        selectedaks = int(selectedaks)
+    indicestoselect = list(range(0, selectedaks)) + list(range(b1_id, b1_id + selectedaks - 1))
+    return indicestoselect
+
+
+def train_dnn(perccoef, files_path=None, save_test_data=True, verbose=False,
+              selected_aks=None):
     # ======== DATA LOADING
     if files_path is None: files_path = ''
     X = sio.loadmat(files_path+'X.mat')['X']
@@ -212,19 +236,11 @@ def train_dnn(perccoef, files_path=None, save_test_data=True, verbose=False):
 
     # ======== (INPUT) DATA REDUCTION
     # Select a subset of frequencies for X according to argument 'perccoef'
-    if (perccoef < 0.99999):
-        if nfrequencies % 2 == 0:
-            aks = (nfrequencies + 2) / 2
-            bks = aks - 2
-        else:
-            aks = (nfrequencies + 1) / 2
-            bks = aks - 1
-        aks = int(aks)
-        selectedaks = int(np.floor(aks * perccoef))
-        indicestoselect = list(range(0, selectedaks)) + list(range(aks, aks + selectedaks - 1))
-        X = np.take(X, indicestoselect, axis=2)
-        nfrequencies = X.shape[2]
-        print("Reduced amount of input, X is now " + str(X.shape))
+    indicestoselect = reduce(perccoef, nfrequencies, selected_aks)
+    X = np.take(X, indicestoselect, axis=2)
+    nfrequencies = X.shape[2]
+    print("Reduced amount of input, X is now " + str(X.shape))
+    print('(selected indices: {})'.format(indicestoselect))
 
     # cut the input matrix (e.g. to keep only a subset of the frequencies)
     # freqmax = 100
@@ -233,7 +249,6 @@ def train_dnn(perccoef, files_path=None, save_test_data=True, verbose=False):
     # ======== NORMALIZATION
     newmins = np.full([ncoefficients, nfrequencies], 0.0)
     newmaxs = np.full([ncoefficients, nfrequencies], 1.0)
-
     X, coefmins, coefmaxs = normalizeinputmatDL(X, newmins, newmaxs)
 
     newmins = np.full([noutparams], 0.0)
@@ -300,6 +315,7 @@ def manage_args(args):
     parser.add_argument('-p', '--path', help='folder containing X.mat and Y.mat (used for training)')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='display the tensorflow output when model is trained')
+    parser.add_argument('--selectedaks', help='Number of aks to select')
     args = parser.parse_args(args)
 
     return args
