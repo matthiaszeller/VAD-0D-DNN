@@ -144,6 +144,7 @@ some cases when the Matlab code doesn't work. Matlab works for simulation time =
     * It is better to first run `test_driver.py` with the `train` option since no options implies `train` and `test`, 
     which will make the working directory messy (because of the modelica build files). Moreover, testing needs 
     to setup a path, as specified in step 10.
+    * You should use `--selectedaks <n>` to choose the number of coefs (default: 5%)
     * The `--path` option is used to find the path to `X.mat` and `Y.mat` files
     * The content of `dnn` will be:
     
@@ -168,6 +169,8 @@ some cases when the Matlab code doesn't work. Matlab works for simulation time =
    `python <path-to-project>/Deep_learning/test_driver.py test > log_test_dnn.txt &`
     * This will add `DNN_Performance.eps` in the `dnn_folder`
     * This will generate the simulation test data
+    * **WARNING**: Make sure that the RPM level in `Mathcard.mo` is correct, and that time discretization in 
+      `utils_openmodelica.runTestSimulation` matches the values used for the original dataset generation !!
 
 1. Move `log_test_dnn.txt` to the `output_folder`. The `output_folder` now has the following structure:
 
@@ -209,6 +212,29 @@ some cases when the Matlab code doesn't work. Matlab works for simulation time =
     * This will create plots and format the result table
     * You can repeat all steps and set `SIMULATION_LVAD = False` in [Simulation_script/setup.py](Simulation_script/setup.py)
       to have a dataset without an assist device, the notebook will make plots to compare the two.
+
+### Generate several datasets
+
+The workflow described above works when we need to generate a single data set.
+However, generating several datasets sequentially is pretty time consuming.
+The solution is to run time-consuming steps in parallel.
+
+For instance, step 3 is the most time-consuming step. Say that you want to generate 
+datasets with different pump speed levels: 4000, 5000, 6000 RPM. You have to perform the
+following:
+
+a. Modify the pump speed in `Mathcard.mo` to 4000 RPM
+
+b. Run steps 1-3
+
+c. Repeat (a) and (b), but set RPM to 5000 and 6000
+
+But one has to **be very careful once step 13 is reached**: the generation of the DNN test dataset
+will be based on the current `Mathcard.mo` file, in which the RPM level has the value that was set
+in (c) at last. 
+
+To overcome this issue, at step 13, do not forget to re-modify `Mathcard.mo` with the RPM level that corresponds
+to the current data set for which you are generating the DNN test dataset.
 
 ## Data flow
 
