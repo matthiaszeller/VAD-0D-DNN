@@ -13,6 +13,7 @@ import argparse
 from tensorflow import keras
 import matplotlib.pyplot as plt
 import utils_openmodelica as uo
+import pickle
 
 # CAUTION : use always the same min and max parameters for the training and the
 # testing. If not, results are wrong.
@@ -129,21 +130,19 @@ def normalizeoutputmat(mat, newmins, newmaxs):
     return mat, parammins, parammaxs
 
 
-def build_keras_model(input_shape, noutparams):
-    model = keras.Sequential([
-        keras.layers.Flatten(input_shape=input_shape),
-        keras.layers.Dense(16, activation='relu'),
-        keras.layers.Dense(16, activation='relu'),
-        keras.layers.Dense(16, activation='relu'),
-        keras.layers.Dense(16, activation='relu'),
-        keras.layers.Dense(noutparams, activation='sigmoid')
-    ])
+def build_keras_model(input_shape, noutparams, n_hlayers=4, n_neurons=16):
+    model = keras.Sequential()
+    model.add(keras.layers.Flatten(input_shape=input_shape))
+    for _ in range(n_hlayers):
+        model.add(keras.layers.Dense(n_neurons, activation='relu'))
+    model.add(keras.layers.Dense(noutparams, activation='sigmoid'))
 
     model.compile(optimizer='adam',
                   loss='mse',
                   metrics=['mae'])
 
     return model
+
 
 def create_and_save_performance_fig(Ytest, Ypred, normdata, folder):
     fig, axs = plt.subplots(2, 2)
@@ -170,8 +169,8 @@ def create_and_save_performance_fig(Ytest, Ypred, normdata, folder):
     plt.savefig(folder + '/DNN_Performance.eps')
 
 def test_dnn(model, Xtest, Ytest, normdata, param_lst,
-             output_dnn_test, modelica_file_path, dnn_folder):
-    # Xtest, Ytest are normalizedf
+             output_dnn_test, modelica_file_path, dnn_folder, runsim=True):
+    # Xtest, Ytest are normalize
 
     # ======== PREDICTION
     Ypred = model.predict(Xtest)
@@ -193,8 +192,10 @@ def test_dnn(model, Xtest, Ytest, normdata, param_lst,
     create_and_save_performance_fig(Ytest, Ypred, normdata, dnn_folder)
 
     # ======== SIMULATE WITH MODELICA
-    uo.runTestSimulation(Ytest=Ytest, Ytest_pred=Ypred, param_lst=param_lst,
-                         output_dnn_test=output_dnn_test, modelica_file_path=modelica_file_path)
+    if runsim:
+        uo.runTestSimulation(Ytest=Ytest, Ytest_pred=Ypred, param_lst=param_lst,
+                             output_dnn_test=output_dnn_test, modelica_file_path=modelica_file_path)
+
 
 def reduce(perc, array_length, selectedaks = None):
     """Return a list of indices (i.e. use them by applying np.take) used to reduce number of input coeffs.
@@ -220,7 +221,7 @@ def reduce(perc, array_length, selectedaks = None):
 
 
 def train_dnn(perccoef, files_path=None, save_test_data=True, verbose=False,
-              selected_aks=None):
+              selected_aks=None, n_hlayers=4, n_neurons=16):
     # ======== DATA LOADING
     if files_path is None: files_path = ''
     X = sio.loadmat(files_path+'X.mat')['X']
@@ -281,7 +282,8 @@ def train_dnn(perccoef, files_path=None, save_test_data=True, verbose=False,
     print("Training and test set generated: shapes are", {key:val.shape for key,val in data.items()})
 
     # ======== BUILD KERAS MODEL
-    model = build_keras_model(input_shape=(ncoefficients, nfrequencies), noutparams=noutparams)
+    model = build_keras_model(input_shape=(ncoefficients, nfrequencies),
+                              noutparams=noutparams, n_hlayers=n_hlayers, n_neurons=n_neurons)
     print(model.summary())
 
     # ======== TRAIN DNN
@@ -299,6 +301,9 @@ def train_dnn(perccoef, files_path=None, save_test_data=True, verbose=False,
 
     # Save the model in the .h5 format
     model.save('DNN_0D_Model.h5')
+    # Save history (binary pickled format)
+    with open('history.bin', 'wb') as f:
+        pickle.dump(history.history, f)
 
     # If train-only mode, save X and Y into files and return nothing (training and testing sets)
     if save_test_data:
