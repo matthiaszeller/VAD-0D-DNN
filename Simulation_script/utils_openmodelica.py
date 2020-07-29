@@ -3,18 +3,19 @@ from random import seed
 from random import random
 import os
 from setup import *
-import shutil
+import numpy.random
 
 from timeit import default_timer as timer
 
 
 class Parameter: 
-    def __init__(self, name, minparam = None, maxparam = None):
+    def __init__(self, name, minparam = None, maxparam = None, epsilon=None):
         self.minparam = minparam
         self.maxparam = maxparam
         self.name = name
         self.value = 0
         self.randomsampling = True
+        self.epsilon = epsilon
         
     def setValue(self, value):
         self.value = value
@@ -23,6 +24,10 @@ class Parameter:
     def sample(self):
         if self.randomsampling:
             self.value = self.minparam + (self.maxparam - self.minparam) * random()
+
+    def sample_epsilon(self):
+        if self.randomsampling:
+            self.value = ((self.maxparam + self.minparam)/2) * (1+self.epsilon * numpy.random.normal(0,1))
 
 
 def prepareOutputFolder(outputfolder):
@@ -54,7 +59,12 @@ def sampleParams(param_lst):
         p.sample()
 
 
-def runSimulation(N, param_lst, output_folder, file, LVAD):
+def sampleParamsEpsilon(param_lst):
+    for p in param_lst:
+        p.sample_epsilon()
+
+
+def runSimulation(N, param_lst, output_folder, file, LVAD, samplingfun=sampleParams):
     """Run the whole simulation. The process involves two steps:
     1- Build the model. It creates an executable in the build folder.
     2- Run N simulations (does not require compilation).
@@ -77,7 +87,7 @@ def runSimulation(N, param_lst, output_folder, file, LVAD):
     # 3. Determine model name
     model_name = "Mathcard.Applications.Ursino1998.Ursino1998Model"
     if LVAD: model_name = "Mathcard.Applications.Ursino1998.HMIII.Ursino1998Model_VAD2"
-    ###############################
+
     # 4. Build the model (done only once)
     # An executable will be created,
     env = {}
@@ -87,7 +97,7 @@ def runSimulation(N, param_lst, output_folder, file, LVAD):
     runcmd(omc, "instantiateModel({})".format(model_name), env)
     runcmd(omc, "simulate({}, stopTime=30.0, numberOfIntervals=2000, \
     simflags=\"-emit_protected\", outputFormat=\"mat\")".format(model_name), env)
-    ###############################
+
     # 5. Prepare the simulation
     # Prepare parameter recording
     param_data = {}
@@ -98,11 +108,11 @@ def runSimulation(N, param_lst, output_folder, file, LVAD):
     # Prepare output file format
     # Note: we don't take the whole model name, only the end of it (-> use split)
     output_file_template = out + model_name.split('.')[-1] + "_output_{}.mat"
-    ###############################
+
     # Loop
     for n in range(N):
         # Sample the parameters
-        sampleParams(param_lst)
+        samplingfun(param_lst)
         # Save parameter values
         dic = {p.name : p.value for p in param_lst}
         param_data[n] = dic
