@@ -1,4 +1,7 @@
-"""Perform 0D model sensitivity analysis. Use -o option to define output folder (default is cwd)."""
+"""Perform 0D model sensitivity analysis. Use -o option to define output folder (default is cwd).
+
+WARNING: you must set the LVAD speed in Mathcard.mo manually (Param_LVAD_RPM)
+         before launching this script."""
 
 # ========================================================= #
 # ------------------------ IMPORTS ------------------------ #
@@ -25,9 +28,11 @@ def sensitivity_analysis_param(paramlst, id_param_analyzed,
     """
     :param paramlst: list[uo.Parameter]
     """
-    # Activate random sampling for the parameter of interest
+    # Reset parameters
     for p in paramlst:
-        p.randomsampling = False
+        # Setting parameter value also disables random sampling
+        p.setValue( (p.minparam + p.maxparam) / 2 )
+    # Activate random sampling for the parameter of interest
     paramlst[id_param_analyzed].randomsampling = True
 
     # Output folder
@@ -56,9 +61,6 @@ if __name__ == '__main__':
     param3 = uo.Parameter("Param_LeftVentricle_AGain_Emax", 0.2, 0.475, epsilon)
     param4 = uo.Parameter("Param_LeftVentricle_kE", 0.011, 0.014, epsilon)
     paramlst = [param1, param2, param3, param4]
-
-    for p in paramlst:
-        p.value = (p.maxparam+p.minparam)/2
 
     # Perform analysis for each param
     for i in range(4):
