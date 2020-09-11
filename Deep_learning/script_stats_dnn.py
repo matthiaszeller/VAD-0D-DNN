@@ -37,7 +37,6 @@
 # ----------------------- IMPORTS ----------------------- #
 # ======================================================= #
 
-import tensorflow as tf
 import sys
 sys.path.insert(1, sys.path[0] + '/../Simulation_script/')
 import os
@@ -45,6 +44,11 @@ import multiprocessing
 import argparse
 import pickle
 import pandas as pd
+from time import time
+
+# Disable tensorflow debugging output, only show warnings/errors
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
+import tensorflow as tf
 
 # ========================================================= #
 # ------------------------- SETUP ------------------------- #
@@ -69,9 +73,10 @@ routine_script = os.path.dirname(sys.argv[0]) + '/stats_dnn.py'
 
 # Define number of each variable (layers, neurons, coeffs)
 combinations = {
-    'hlayers': [1, 2, 4, 6],
-    'neurons': [8, 16, 32, 64],
-    'aks':     [10, 20, 40, 60, 100]
+    'hlayers': [1],#[1, 2, 3, 4, 5, 6],
+    'neurons': [8, 16, 32, 64, 128],
+    'aks':     [50]
+               #[10, 20, 40, 60, 100]
 }
 
 # ========================================================= #
@@ -116,11 +121,29 @@ def execute(args):
     # Run external script & train DNN (reminder: this will be launched in subfolder)
     #print('current dir', os.getcwd())
     print('<Multiprocessing>', msg, 'Running external script from', os.getcwd())
+    start = time()
     os.system(f'python3 {routine_script} {n_hlayers} {n_neurons} {n_aks} > log.txt')
+    print('Elapsed time:', time() - start)
 
     # Restore original woking directory -> required for next task to work
     os.chdir('..')
     print('<Multiprocessing>', msg, 'back to' + os.getcwd())
+
+
+def manage_tensorflow_gpu(gpu_forced):
+    print('Tensorflow version:', tf.__version__)
+    print()
+
+    # Display recognized GPUs
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    N = len(gpus)
+    if N == 0:
+        if gpu_forced is True:
+            print('<ERROR> No GPU available, but launched with --gpu. Abort.')
+            exit()
+        print('<WARNING> No GPU available, computations will take place on CPU')
+    else:
+        print(f'{N} GPU{"s" if N > 1 else ""} recognized:\n{gpus}')
 
 
 def main():
@@ -129,6 +152,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--analyze', action='store_true',
                         help='extract results and save results')
+    # Note that if computations will automatically take place on the GPU if possible,
+    # but the user might forget to activate to correct environment
+    parser.add_argument('--gpu', action='store_true',
+                        help='force computations on GPU, throw error if not available')
     args = parser.parse_args()
     if args.analyze:
         analyze_results()
@@ -140,8 +167,9 @@ def main():
     if 'X.mat' not in files or 'Y.mat' not in files:
         raise Exception('You must run the script in a folder containing X.mat and Y.mat files.')
 
+    manage_tensorflow_gpu(args.gpu)
+
     # Begin logging
-    print('Tensorflow version:', tf.__version__)
     print('\nArchitectures:', architectures)
     print()
 
