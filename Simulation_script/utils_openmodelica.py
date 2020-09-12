@@ -39,19 +39,19 @@ def prepareOutputFolder(outputfolder):
     # Create folder for output data
     data_output = outputfolder + "/outputs/"
     os.mkdir(data_output)
-    q("<INIT> Output folder: " + outputfolder)
+    #q("<INIT> Output folder: " + outputfolder)
     return data_output
 
 
-def runcmd(omc, cmd, env):
+def runcmd(omc, cmd, env, log):
     """Run openmodelica command with the OMCSessionZMQ instance passed as an argument"""
     # Debug: display command to be run
-    q("<RUNNING> " + cmd)
+    log("<RUNNING> " + cmd)
     # Run the actual command and save result
     env[cmd] = omc.sendExpression(cmd)
     # Print (debug mode) the output, except for instanciateModel (too verbose)
     if not "instantiateModel" in cmd:
-        q("<CMD OUTPUT> " + str(env[cmd]))
+        log("<CMD OUTPUT> " + str(env[cmd]))
 
 
 def sampleParams(param_lst):
@@ -65,7 +65,7 @@ def sampleParamsEpsilon(param_lst):
 
 
 def runSimulation(N, param_lst, output_folder, file, LVAD, samplingfun=sampleParams,
-                  om_sim_settings=None, override_params=None):
+                  om_sim_settings=None, override_params=None, log=None, om_runtime_args=''):
     """Run the whole simulation. The process involves two steps:
     1- Build the model. It creates an executable in the build folder.
     2- Run N simulations (does not require compilation).
@@ -76,6 +76,9 @@ def runSimulation(N, param_lst, output_folder, file, LVAD, samplingfun=samplePar
     :param dict[str, any] override_params: dictionnary of 0D model parameters to override
     :param dict[str, any] om_sim_settings: dictionnary of OpenModelica simulation settings
     """
+    if log is None:
+        log = q
+
     # 1. Create folders
     try:
         out = prepareOutputFolder(output_folder)
@@ -93,10 +96,9 @@ def runSimulation(N, param_lst, output_folder, file, LVAD, samplingfun=samplePar
     # 4. Build the model (done only once)
     # An executable will be created,
     env = {}
-    runcmd(omc, "loadModel(Modelica)", env)
-    print("loadFile(\"{}\")".format(file))
-    runcmd(omc, "loadFile(\"{}\")".format(file), env)
-    runcmd(omc, "instantiateModel({})".format(model_name), env)
+    runcmd(omc, "loadModel(Modelica)", env, log)
+    runcmd(omc, "loadFile(\"{}\")".format(file), env, log)
+    runcmd(omc, "instantiateModel({})".format(model_name), env, log)
 
     cmd_compile = "simulate({}, stopTime=30.0, numberOfIntervals=2000, " \
                   "simflags=\"-emit_protected\", outputFormat=\"mat\")".format(model_name)
@@ -106,7 +108,8 @@ def runSimulation(N, param_lst, output_folder, file, LVAD, samplingfun=samplePar
             for k,v in om_sim_settings.items()
         ]) + ')'
 
-    runcmd(omc, cmd_compile, env)
+    runcmd(omc, cmd_compile, env, log)
+    del omc
 
     # 5. Prepare the simulation
     # Prepare parameter recording
@@ -135,12 +138,13 @@ def runSimulation(N, param_lst, output_folder, file, LVAD, samplingfun=samplePar
         output_file = output_file_template.format(n)
         # Simulate without build
         cmd = "./" + model_name + " -override="+override_cmd+override_params \
-                   + " -r="+output_file + " -emit_protected"
-        q("<RUNNING> " + cmd)
+                   + " -r="+output_file + " -emit_protected " + om_runtime_args
+        log("<RUNNING> " + cmd)
         start = timer()
         res = os.system(cmd)
         end = timer()
-        q("Simulation time (n={}): {:.5}".format(n, end-start))
+        log("Simulation time (n={}): {:.5}".format(n, end-start))
+
     writeParamData(param_data, output_folder)
 
 
