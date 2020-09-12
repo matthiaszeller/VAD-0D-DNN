@@ -10,7 +10,7 @@ numberofsamples = 10000
 file_path="/media/maousi/Data/Documents/Programmation/git/vad-0d-dnn/modelica/original/Mathcard.mo"
 
 # Output folder path for the raw dataset
-output_folder="/media/maousi/Data/tmp/simulation_LVAD_RPM6000"
+output_folder="/media/maousi/Data/tmp/tmp/test"
 
 # SIMULATION WITH/WITHOUT LVAD
 # Warning: this applies for dataset generation and for DNN testing
@@ -26,8 +26,8 @@ def q(msg):
 # ============ DNN TESTING
 
 # Location of the DNN training files
-dnn_folder = "/media/maousi/Data/tmp/simulation_LVAD_RPM5000_2020_04_21/dnn"
+dnn_folder = "/media/maousi/Data/tmp/simulation_LVAD_RPM6000_Pulse_T30_N2000_2020_04_26/dnn"
 
 # Output folder path for the DNN testing
-output_folder_DNN_test = "/media/maousi/Data/tmp/simulation_LVAD_RPM5000_2020_04_21/dnn_test"
+output_folder_DNN_test = "/media/maousi/Data/tmp/simulation_LVAD_RPM6000_Pulse_T30_N2000_2020_04_26/dnn_test"
 

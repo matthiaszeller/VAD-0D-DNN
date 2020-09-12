@@ -64,24 +64,26 @@ def sampleParamsEpsilon(param_lst):
         p.sample_epsilon()
 
 
-def runSimulation(N, param_lst, output_folder, file, LVAD, samplingfun=sampleParams):
+def runSimulation(N, param_lst, output_folder, file, LVAD, samplingfun=sampleParams,
+                  om_sim_settings=None, override_params=None):
     """Run the whole simulation. The process involves two steps:
     1- Build the model. It creates an executable in the build folder.
     2- Run N simulations (does not require compilation).
     For each simulation, generate new parameter values and override them in the original model,
     according to the parameters specified in param_lst.
-    Note: we can run simulation without build by using ./exec_name -override=paramName=ParamValue"""
+    Note: we can run simulation without build by using ./exec_name -override=paramName=ParamValue
+
+    :param dict[str, any] override_params: dictionnary of 0D model parameters to override
+    :param dict[str, any] om_sim_settings: dictionnary of OpenModelica simulation settings
+    """
     # 1. Create folders
     try:
         out = prepareOutputFolder(output_folder)
     except Exception:
-        print("\n===================== FATAL ERROR =====================")
-        print("Could not create the folder '{}' for unknown reason".format(output_folder))
+        raise Exception("Could not create the folder '{}' for unknown reason".format(output_folder))
     # Do not overwrite in existing folder ! Abort the program
     if out == False:
-        print("\n===================== FATAL ERROR =====================")
-        print("The folder '{}' already exists".format(output_folder))
-        exit()
+        raise ValueError("The folder '{}' already exists".format(output_folder))
     # 2. Run OMC session
     omc = OMCSessionZMQ()
     # 3. Determine model name
@@ -95,8 +97,16 @@ def runSimulation(N, param_lst, output_folder, file, LVAD, samplingfun=samplePar
     print("loadFile(\"{}\")".format(file))
     runcmd(omc, "loadFile(\"{}\")".format(file), env)
     runcmd(omc, "instantiateModel({})".format(model_name), env)
-    runcmd(omc, "simulate({}, stopTime=30.0, numberOfIntervals=2000, \
-    simflags=\"-emit_protected\", outputFormat=\"mat\")".format(model_name), env)
+
+    cmd_compile = "simulate({}, stopTime=30.0, numberOfIntervals=2000, " \
+                  "simflags=\"-emit_protected\", outputFormat=\"mat\")".format(model_name)
+    if om_sim_settings is not None:
+        cmd_compile = f'simulate({model_name}, ' + ', '.join([
+            k + '=' + str(v)
+            for k,v in om_sim_settings.items()
+        ]) + ')'
+
+    runcmd(omc, cmd_compile, env)
 
     # 5. Prepare the simulation
     # Prepare parameter recording
@@ -108,6 +118,9 @@ def runSimulation(N, param_lst, output_folder, file, LVAD, samplingfun=samplePar
     # Prepare output file format
     # Note: we don't take the whole model name, only the end of it (-> use split)
     output_file_template = out + model_name.split('.')[-1] + "_output_{}.mat"
+
+    override_params = ','.join(k + '=' + str(v) for k, v in override_params.items()) \
+                      if override_params is not None else ''
 
     # Loop
     for n in range(N):
@@ -121,7 +134,7 @@ def runSimulation(N, param_lst, output_folder, file, LVAD, samplingfun=samplePar
         # Specify output file
         output_file = output_file_template.format(n)
         # Simulate without build
-        cmd = "./" + model_name + " -override="+override_cmd \
+        cmd = "./" + model_name + " -override="+override_cmd+override_params \
                    + " -r="+output_file + " -emit_protected"
         q("<RUNNING> " + cmd)
         start = timer()
