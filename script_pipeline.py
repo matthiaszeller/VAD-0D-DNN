@@ -10,6 +10,9 @@ from os import path
 import os
 import multiprocessing
 import random
+import json
+import subprocess
+from Logger import Logger
 import sys
 sys.path.insert(1, 'Simulation_script/')
 from Simulation_script import utils_openmodelica as uo
@@ -26,17 +29,17 @@ from Simulation_script import utils_openmodelica as uo
 root_output_folder = '/media/maousi/Data/tmp/pipelining'
 root_trash_folder = path.join(root_output_folder, 'trash')
 # Choose this value to get ~ 100% of CPU usage during simulation data generation
-N_processes = 3
+N_processes = 2
 
 # All pump configurations (pump speed, LVAD, artificial Pulse)
 configurations = [
     (rpm, True, True)
-    for rpm in [4000]
+    for rpm in [4000, 5000, 7000]
 ]
 
 # ---------- SIMULATION SETUP
 # The number of simulations in a single dataset
-N_samples = 10
+N_samples = 2
 # Whether to use the 0D model with/without LVAD
 LVAD_simulation = True
 # Simulation time, number of intervals, etc...
@@ -50,6 +53,8 @@ om_simulation_settings = {
 global_0D_params_override = {
 
 }
+# Arguments with which to run executables
+om_runtime_args = '-lv=-LOG_SUCCESS'
 # The path to `Mathcard.mo`
 modelica_file_path = '/media/maousi/Data/Documents/Programmation/git/vad-0d-dnn/modelica/original/Mathcard.mo'
 
@@ -70,6 +75,11 @@ else:
     # TODO: determine behaviour in case folder exists,
     # one should check data integrity and procedure completeness
     pass
+
+
+# ---------- PREPROCESSING
+current_script_path = path.dirname(path.abspath(__file__))
+preprocessing_script_path = path.join(current_script_path, 'Pre-processing', 'script_createdataset.py')
 
 
 # ========================================================= #
@@ -122,13 +132,8 @@ def main():
         os.mkdir(root_trash_folder)
 
     # Go!
-    try:
-        ps_pool = multiprocessing.Pool(processes=N_processes)
-        ps_pool.map(pipeline, configurations)
-    except Exception as e:
-        print(e)
-        print('exiting after error...')
-        exit()
+    ps_pool = multiprocessing.Pool(processes=N_processes)
+    ps_pool.map(pipeline, configurations)
 
 
 def gen_trash_folder(root_trash_folder, configuration=None):
@@ -156,6 +161,7 @@ def gen_trash_folder(root_trash_folder, configuration=None):
 def pipeline(configuration):
     # ------------- SIMULATION DATA GENERATION
     output_folder = path.join(root_output_folder, format_folder_name(configuration))
+    logger = Logger(path.join(output_folder, '0-log_data_generation.txt'))
     # --- Trash data (modelica build and exec files)
     trash_folder = gen_trash_folder(root_trash_folder, configuration)
     os.chdir(trash_folder)
@@ -171,9 +177,26 @@ def pipeline(configuration):
         file=modelica_file_path,
         LVAD=LVAD_simulation,
         om_sim_settings=om_simulation_settings,
-        override_params=params_override
+        override_params=params_override,
+        log=logger.log,
+        om_runtime_args=om_runtime_args
     )
 
+    # --- Save settings & information
+    logger.write()
+    with open(path.join(output_folder, '0-simulation_settings.json'), 'w') as f:
+        json.dump(om_simulation_settings, f, indent=4)
+    with open(path.join(output_folder, '0-params_0D_override.json'), 'w') as f:
+        json.dump(global_0D_params_override, f, indent=4)
+
+    # ------------- PREPROCESSING
+    os.chdir(output_folder)
+    p = subprocess.Popen(['python3', preprocessing_script_path],
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    stdout, stderr = p.communicate()
+    with open('1-preprocessing-stdout.txt', 'w') as f:
+        f.write(stdout.decode() + '\n' + stderr.decode())
 
 
 if __name__ == '__main__':
