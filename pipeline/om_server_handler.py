@@ -16,7 +16,7 @@ class OMServerHanlder(object):
 
     monitored_omc_ps: List[psutil.Process]
 
-    def __init__(self, timeout=10):
+    def __init__(self, timeout=10, logfun=None):
         """
         :param float timeout: time after which to kill the OM session in seconds
         """
@@ -24,6 +24,7 @@ class OMServerHanlder(object):
         self.monitored_omc_ps = []
         self._sleep_time = 4
         self._omc_session_timeout = timeout
+        self._logfun = (lambda _: None) if logfun is None else logfun
 
         thread = threading.Thread(target=self.__loop, args=())
         thread.daemon = True
@@ -31,8 +32,10 @@ class OMServerHanlder(object):
 
     def kill_sessions(self):
         self.__update_processes()
+        N = len(self.monitored_omc_ps)
         for p in self.monitored_omc_ps:
             p.kill()
+        self._logfun(f'OMServerHanlder: Killed {N} remaining OM sessions')
 
     def __loop(self):
         # ---- Monitor
@@ -47,7 +50,9 @@ class OMServerHanlder(object):
         t = time()
         for ps in self.monitored_omc_ps:
             if t - ps.create_time() > self._omc_session_timeout:
+                pid = ps.pid
                 ps.kill()
+                self._logfun(f'OMServerHanlder: Killed OM session [pid {pid}]')
 
     def __update_processes(self):
         self.monitored_omc_ps = [
