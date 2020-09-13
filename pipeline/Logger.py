@@ -14,6 +14,14 @@ class Logger(object):
     def log(self, msg):
         self._logfun(msg)
 
+    def write(self, msg):
+        """Equivalent to `log(msg)`, but does not log if msg == '\n'.
+        This is useful to redirect the sys.stdout to a custom logger."""
+        if msg == '\n':
+            return
+
+        self._logfun(msg)
+
     def __log(self, msg):
         t = time.time()
         self.buffer.append(
@@ -21,7 +29,7 @@ class Logger(object):
         )
         self.k += 1
         if self.k > 50:
-            self.write()
+            self.flush()
 
     def __log_and_print(self, msg):
         t = time.time()
@@ -31,9 +39,9 @@ class Logger(object):
         print(os.getpid(), msg)
         self.k += 1
         if self.k > 50:
-            self.write()
+            self.flush()
 
-    def write(self):
+    def flush(self):
         with open(self.filepath, 'a') as f:
             f.write('\n'.join(f'{e[0]},{e[1]},{e[2]}' for e in self.buffer) + '\n')
         self.buffer = []

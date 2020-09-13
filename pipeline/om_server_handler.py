@@ -8,18 +8,22 @@ from typing import List
 class OMServerHanlder(object):
     """Manage the OpenModelica servers. The OM sessions launched with multiprocessing
     do not terminate once the variable bound to the session is deleted, which wastes
-    some RAM.
+    some RAM. Note that those sessions are only used to compile the 0D model, which
+    only takes a few seconds.
 
     Monitoring old omc processes and kill them after a timeout is the only way through
     the issue so far."""
 
     monitored_omc_ps: List[psutil.Process]
 
-    def __init__(self):
+    def __init__(self, timeout=10):
+        """
+        :param float timeout: time after which to kill the OM session in seconds
+        """
         super().__init__()
         self.monitored_omc_ps = []
         self._sleep_time = 4
-        self._omc_session_timeout = 20
+        self._omc_session_timeout = timeout
 
         thread = threading.Thread(target=self.__loop, args=())
         thread.daemon = True

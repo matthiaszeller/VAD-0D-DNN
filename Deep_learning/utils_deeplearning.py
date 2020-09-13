@@ -166,7 +166,8 @@ def create_and_save_performance_fig(Ytest, Ypred, normdata, folder):
     axs[1, 1].set_ylim(normdata['parammins'][3], normdata['parammaxs'][3])
     fig.set_figheight(10)
     fig.set_figwidth(15)
-    plt.savefig(folder + '/DNN_Performance.eps')
+    plt.savefig(folder + '/DNN_Performance.eps', transparent=False)
+
 
 def test_dnn(model, Xtest, Ytest, normdata, param_lst,
              output_dnn_test, modelica_file_path, dnn_folder, runsim=True):
@@ -222,6 +223,7 @@ def reduce(perc, array_length, selectedaks = None):
 
 def train_dnn(perccoef, files_path=None, save_test_data=True, verbose=False,
               selected_aks=None, n_hlayers=4, n_neurons=16):
+    """Writes data in current working directory."""
     # ======== DATA LOADING
     if files_path is None: files_path = ''
     X = sio.loadmat(files_path+'X.mat')['X']
@@ -297,7 +299,7 @@ def train_dnn(perccoef, files_path=None, save_test_data=True, verbose=False,
     plt.semilogy(history.history['loss'], label='loss')
     plt.semilogy(history.history['val_loss'], label='val_loss')
     plt.legend()
-    plt.savefig('Losses.eps')
+    plt.savefig('Losses.eps', transparent=False)
 
     # Save the model in the .h5 format
     model.save('DNN_0D_Model.h5')

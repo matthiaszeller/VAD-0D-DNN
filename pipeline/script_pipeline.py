@@ -26,17 +26,23 @@ import random
 import json
 import subprocess
 import sys
-import logging
-logging.basicConfig(stream=sys.stdout)
+
+# Reduce Tensorflow verbosity
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 # --- Import project modules
 current_script_path = path.dirname(path.abspath(__file__))
 project_path = path.dirname(current_script_path)
+
 sys.path.insert(1, path.join(project_path, 'Simulation_script/'))
 import utils_openmodelica as uo
+
 sys.path.insert(1, path.join(project_path, 'pipelining/'))
 from om_server_handler import OMServerHanlder
 from Logger import Logger
+
+sys.path.insert(1, path.join(project_path, 'Deep_learning/'))
+import utils_deeplearning as ud
 
 # ========================================================= #
 # ------------------------- SETUP ------------------------- #
@@ -50,10 +56,10 @@ root_trash_folder = path.join(root_output_folder, 'trash')
 # --- Multiprocessing - Pick value to reach 100% of CPU usage during simulation data generation
 N_processes = 4
 
-# --- Pump configurations (pump speed, LVAD, artificial Pulse)
+# --- Pump configurations (pump speed, LVAD, artificial Pulse, DNN architectures)
 configurations = [
-    (rpm, True, True)
-    for rpm in [4000, 5000]
+    (rpm, True, True, [(2, 16, 50)])
+    for rpm in [4000]
 ]
 
 # -------------------- SIMULATION SETUP
@@ -110,19 +116,21 @@ mainlogger = Logger(path.join(root_output_folder, 'mainlog.txt'), print=True)
 # ---------------------- SCRIPT BODY ---------------------- #
 # ========================================================= #
 
+
 # --------------------------------------------------------- #
 #                     DATASET SETTINGS                      #
 # --------------------------------------------------------- #
 
+
 def format_folder_name(configuration):
-    rpm, lvad, artpulse = configuration
+    rpm, lvad, artpulse, _ = configuration
     lvad = '_LVAD' if lvad else ''
     artpulse = '_AP' if artpulse else ''
     return f'{rpm}{lvad}{artpulse}'
 
 
 def build_0D_parameters_from_config(configuration):
-    rpm, lvad, artpulse = configuration
+    rpm, lvad, artpulse, _ = configuration
     dic = {}
     # --- Pump speed
     dic['Param_LVAD_RPM'] = rpm
@@ -132,9 +140,16 @@ def build_0D_parameters_from_config(configuration):
 
     return dic
 
+
+def format_dnn_folder_name(architecture):
+    layers, neurons, aks = architecture
+    return f'dnn_{layers}_layers_{neurons}_neurons_{aks}_aks'
+
+
 # ------------------------------------------------------- #
 #                        SCRIPTING                        #
 # ------------------------------------------------------- #
+
 
 def prompt_initial_validate():
     def display(var, dic, indent=30):
@@ -182,11 +197,13 @@ def main():
     mainlogger.log('Killing remaining OM sessions')
     server_handler.kill_sessions()
 
-    mainlogger.write()
+    mainlogger.flush()
+
 
 # ------------------------------------------------------- #
 #                      DATA PIPELINE                      #
 # ------------------------------------------------------- #
+
 
 def gen_trash_folder(root_trash_folder, configuration=None):
     """Create a folder with a unique name to perform temporary computations.
@@ -211,19 +228,25 @@ def gen_trash_folder(root_trash_folder, configuration=None):
 
 
 def pipeline(configuration):
-    rpm, lvad, artpulse = configuration
+    rpm, lvad, artpulse, architectures = configuration
+
+    # ------------- PATH & LOGGING CONFIGURATION
+    folder_name = format_folder_name(configuration)
+    output_folder = path.join(root_output_folder, folder_name)
+    simlogger = Logger(path.join(output_folder, '1-log_data_generation.log'))
+    logger = Logger(path.join(output_folder, '0-log.log'), print=True)
+
     # ------------- SIMULATION DATA GENERATION
-    output_folder = path.join(root_output_folder, format_folder_name(configuration))
-    simlogger = Logger(path.join(output_folder, '1-log_data_generation.txt'))
-    logger = Logger(path.join(output_folder, '0-log.txt'), print=True)
     # --- Trash data (modelica build and exec files)
     trash_folder = gen_trash_folder(root_trash_folder, configuration)
     os.chdir(trash_folder)
+
     # --- Build parameters based on configuration
     params_override = global_0D_params_override.copy()
     params_override.update(build_0D_parameters_from_config(configuration))
+
     # --- Run simulations
-    logger.log('Launching 0D simulations for config ' + format_folder_name(configuration))
+    logger.log('Launching 0D simulations for config ' + folder_name)
     uo.runSimulation(
         N=N_samples,
         param_lst=list_parameters,
@@ -236,8 +259,9 @@ def pipeline(configuration):
         om_runtime_args=om_runtime_args
     )
     logger.log('Simulations completed...')
+
     # --- Save settings & output
-    simlogger.write()
+    simlogger.flush()
     with open(path.join(output_folder, '1-simulation_settings.json'), 'w') as f:
         json.dump(om_build_settings, f, indent=4)
     with open(path.join(output_folder, '1-params_0D_override.json'), 'w') as f:
@@ -245,23 +269,62 @@ def pipeline(configuration):
 
     # ------------- PREPROCESSING
     os.chdir(output_folder)
-    logger.log('Launching pre-processing for configuration ' + format_folder_name(configuration))
+    logger.log('Launching pre-processing for configuration ' + folder_name)
     p = subprocess.Popen(['python3', preprocessing_script_path],
                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     stdout, stderr = p.communicate()
-    with open('2-preprocessing-stdout.txt', 'w') as f:
+    with open('2-preprocessing-stdout.log', 'w') as f:
         f.write(stdout.decode() + '\n' + stderr.decode())
     logger.log('Pre-processing has ended')
 
     # ------------- DNN TRAINING
-    logger.log('Launching DNN training for configuration ' + format_folder_name(configuration))
+    logger.log('Launching DNN training for configuration ' + folder_name)
+    n = len(architectures)
+    for i, (hlayers, neurons, aks) in enumerate(architectures):
+        logger.log(f'Training architecture {i+1}/{n}...')
+        dnn_data_folder = format_dnn_folder_name((hlayers, neurons, aks))
+        dnn_data_folder = path.join(output_folder, dnn_data_folder)
+        os.mkdir(dnn_data_folder)
+        os.chdir(dnn_data_folder)
 
-    logger.write()
+        # Redirect stdout to a log file for the training/testing procedure
+        dnnlogger = Logger(path.join(dnn_data_folder, 'log_dnn.log'))
+        old_stdout = sys.stdout
+        sys.stdout = dnnlogger
+
+        (normdata, (Xtest, Ytest), model) = ud.train_dnn(
+            perccoef=0,
+            selected_aks=aks,
+            n_hlayers=hlayers,
+            n_neurons=neurons,
+            files_path='../'
+        )
+
+        ud.test_dnn(
+            model=model,
+            Xtest=Xtest,
+            Ytest=Ytest,
+            normdata=normdata,
+            param_lst=list_parameters,
+            runsim=False,
+            dnn_folder='.',
+            output_dnn_test=None,
+            modelica_file_path=None,
+        )
+
+        dnnlogger.flush()
+        sys.stdout = old_stdout
+
+    logger.log('DNN training completed...')
+
+    logger.flush()
+
 
 # ------------------------------------------------------- #
 #                        SCRIPTING                        #
 # ------------------------------------------------------- #
+
 
 if __name__ == '__main__':
     main()
