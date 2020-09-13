@@ -77,17 +77,17 @@ def myfft(signal):
         aks[-1] = 2 * coefs[-1]
         bks[-1] = 0
 
-    isimag = False
-    for ak in aks:
-        if np.imag(ak) != 0.0:
-            isimag = True
-            break
-    for bk in bks:
-        if np.imag(bk) != 0.0:
-            isimag = True
-            break
-    if isimag:
-        raise Exception("myyft: some aks, bks are imaginary")
+    # isimag = False
+    # for ak in aks:
+    #     if np.imag(ak) != 0.0:
+    #         isimag = True
+    #         break
+    # for bk in bks:
+    #     if np.imag(bk) != 0.0:
+    #         isimag = True
+    #         break
+    # if isimag:
+    #     raise Exception("myyft: some aks, bks are imaginary")
 
     return coefs, np.real(aks), np.real(bks)
 
@@ -147,7 +147,7 @@ if __name__ == '__main__':
 
     # ================ CREATE DNN INPUT DATA X.mat
     for i, f in enumerate(files):
-        print(f'Parsing input file {i}/{Nfile} {f}')
+        print(f'Parsing input file {i+1}/{Nfile} {f}')
         reader = Reader(os.path.join(path_mats, f), 'dymola')
 
         for j, var in enumerate(input_vars):
@@ -158,7 +158,10 @@ if __name__ == '__main__':
             # Fourier transform
             y, aks, bks, T, t, signal = perform_fft(signal, t, dt)
             # Some bks are always zero
+            #print('before reduction, len(bks) =', len(bks))
+            #print('index of zero', np.argwhere(bks == 0))
             bks = bks[abs(bks) > 1e-15]
+            #print('after reduction, len(bks) =', len(bks))
 
             # Instanciate null tensor
             if i == 0 and j == 0:

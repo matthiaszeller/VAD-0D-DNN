@@ -1,10 +1,23 @@
-"""This script aims to wrap all code related to:
+"""This script wraps all the code related to:
     - simulation setup
     - simulation data generation
     - data pre-processing
     - DNN training
     - DNN testing
+
+When running the script, you are first prompted to continue.
+Advice:
+    - to do some tests, set `N_processes` to a very low value
+    - read the configuration display
 """
+
+# TODO: data integrity (or at least procedure completeness) check
+# TODO: kill omc servers that never stop
+# TODO: make pipeline function verbose
+
+# ======================================================= #
+# ----------------------- IMPORTS ----------------------- #
+# ======================================================= #
 
 from os import path
 import os
@@ -12,61 +25,70 @@ import multiprocessing
 import random
 import json
 import subprocess
-from Logger import Logger
 import sys
-sys.path.insert(1, 'Simulation_script/')
-from Simulation_script import utils_openmodelica as uo
+import logging
+logging.basicConfig(stream=sys.stdout)
 
-# TODO: data integrity (or at least procedure completeness) check
-
+# --- Import project modules
+current_script_path = path.dirname(path.abspath(__file__))
+project_path = path.dirname(current_script_path)
+sys.path.insert(1, path.join(project_path, 'Simulation_script/'))
+import utils_openmodelica as uo
+sys.path.insert(1, path.join(project_path, 'pipelining/'))
+from om_server_handler import OMServerHanlder
+from Logger import Logger
 
 # ========================================================= #
 # ------------------------- SETUP ------------------------- #
 # ========================================================= #
 
-# ---------- GENERAL SETUP
-# Root folder containing all data
+# -------------------- GENERAL SETUP
+
+# --- Root folder containing all data
 root_output_folder = '/media/maousi/Data/tmp/pipelining'
 root_trash_folder = path.join(root_output_folder, 'trash')
-# Choose this value to get ~ 100% of CPU usage during simulation data generation
-N_processes = 2
+# --- Multiprocessing - Pick value to reach 100% of CPU usage during simulation data generation
+N_processes = 4
 
-# All pump configurations (pump speed, LVAD, artificial Pulse)
+# --- Pump configurations (pump speed, LVAD, artificial Pulse)
 configurations = [
     (rpm, True, True)
-    for rpm in [4000, 5000, 7000]
+    for rpm in [4000, 5000]
 ]
 
-# ---------- SIMULATION SETUP
+# -------------------- SIMULATION SETUP
+
 # The number of simulations in a single dataset
-N_samples = 2
-# Whether to use the 0D model with/without LVAD
-LVAD_simulation = True
-# Simulation time, number of intervals, etc...
-om_simulation_settings = {
+N_samples = 10
+
+# OpenModelica build settings: simulation time, number of intervals, etc...
+om_build_settings = {
     'stopTime': 30.0,
     'numberOfIntervals': 2000,
     'outputFormat': '"mat"',
     'simflags': '"-emit_protected"',
 }
+
 # 0D Model parameters overriding
 global_0D_params_override = {
 
 }
-# Arguments with which to run executables
-om_runtime_args = '-lv=-LOG_SUCCESS'
-# The path to `Mathcard.mo`
-modelica_file_path = '/media/maousi/Data/Documents/Programmation/git/vad-0d-dnn/modelica/original/Mathcard.mo'
 
-# --- Do not edit
+# Arguments with which to run executables
+om_runtime_args = '-lv=-LOG_SUCCESS' # reduce verbosity
+
+# The path to `Mathcard.mo`
+modelica_file_path = path.join(project_path, 'modelica/original/Mathcard.mo')
+
+# -------------------- Variable parameters
 param1 = uo.Parameter("Param_LeftVentricle_Emax0", 0.2, 2.95)
 param2 = uo.Parameter("Param_LeftVentricle_EmaxRef0", 0.2, 2.392)
 param3 = uo.Parameter("Param_LeftVentricle_AGain_Emax", 0.2, 0.475)
 param4 = uo.Parameter("Param_LeftVentricle_kE", 0.011, 0.014)
 list_parameters = [param1, param2, param3, param4]
-# ---
 
-# ---------- SETUP CHECKUP
+
+# -------------------- SETUP CHECKUP
 if path.isfile(root_output_folder):
     raise ValueError('Invalid root_output_folder')
 elif not path.exists(root_output_folder):
@@ -78,13 +100,19 @@ else:
 
 
 # ---------- PREPROCESSING
-current_script_path = path.dirname(path.abspath(__file__))
-preprocessing_script_path = path.join(current_script_path, 'Pre-processing', 'script_createdataset.py')
+preprocessing_script_path = path.join(project_path, 'Pre-processing', 'script_createdataset.py')
 
+
+#
+mainlogger = Logger(path.join(root_output_folder, 'mainlog.txt'), print=True)
 
 # ========================================================= #
 # ---------------------- SCRIPT BODY ---------------------- #
 # ========================================================= #
+
+# --------------------------------------------------------- #
+#                     DATASET SETTINGS                      #
+# --------------------------------------------------------- #
 
 def format_folder_name(configuration):
     rpm, lvad, artpulse = configuration
@@ -96,10 +124,17 @@ def format_folder_name(configuration):
 def build_0D_parameters_from_config(configuration):
     rpm, lvad, artpulse = configuration
     dic = {}
+    # --- Pump speed
+    dic['Param_LVAD_RPM'] = rpm
+    # --- Artificial Pulse
     if not artpulse:
         dic['HMIII_Pulse_Amplitude'] = 0
+
     return dic
 
+# ------------------------------------------------------- #
+#                        SCRIPTING                        #
+# ------------------------------------------------------- #
 
 def prompt_initial_validate():
     def display(var, dic, indent=30):
@@ -113,7 +148,7 @@ def prompt_initial_validate():
     print('PIPELINING SCRIPT')
     print('\nPlease, carefully verify the settings below before proceeding:')
     prompt_vars = ['N_processes', 'N_samples', 'root_output_folder',
-                   'LVAD_simulation', 'om_simulation_settings',
+                   'om_build_settings',
                    'global_0D_params_override', 'configurations']
 
     for var in prompt_vars:
@@ -128,20 +163,37 @@ def main():
     prompt_initial_validate()
 
     # Prepare
+
     if not path.exists(root_trash_folder):
+        mainlogger.log('Creating trash folder...')
         os.mkdir(root_trash_folder)
+    else:
+        mainlogger.log('Trash folder detected')
+
+    # Run a thread in background to kill OpenModelica sessions that never close
+    mainlogger.log('Starting OMServerHanlder...')
+    server_handler = OMServerHanlder()
 
     # Go!
+    mainlogger.log('Launching processes from pool...')
     ps_pool = multiprocessing.Pool(processes=N_processes)
     ps_pool.map(pipeline, configurations)
 
+    mainlogger.log('Killing remaining OM sessions')
+    server_handler.kill_sessions()
+
+    mainlogger.write()
+
+# ------------------------------------------------------- #
+#                      DATA PIPELINE                      #
+# ------------------------------------------------------- #
 
 def gen_trash_folder(root_trash_folder, configuration=None):
     """Create a folder with a unique name to perform temporary computations.
     Rationale: do not mix Modelica build and exec files from different configurations.
     TODO: autoclean (delete) at end
     :param str root_trash_folder: the `.../trash` folder to put trash data in
-    :return str: path of the created folder"""
+    :return str: path of the created subfolder"""
     def gen_name(config=None, k=0):
         if config is None:
             return bytes(random.getrandbits(8) for _ in range(3)).hex()
@@ -159,46 +211,57 @@ def gen_trash_folder(root_trash_folder, configuration=None):
 
 
 def pipeline(configuration):
+    rpm, lvad, artpulse = configuration
     # ------------- SIMULATION DATA GENERATION
     output_folder = path.join(root_output_folder, format_folder_name(configuration))
-    logger = Logger(path.join(output_folder, '0-log_data_generation.txt'))
+    simlogger = Logger(path.join(output_folder, '1-log_data_generation.txt'))
+    logger = Logger(path.join(output_folder, '0-log.txt'), print=True)
     # --- Trash data (modelica build and exec files)
     trash_folder = gen_trash_folder(root_trash_folder, configuration)
     os.chdir(trash_folder)
     # --- Build parameters based on configuration
     params_override = global_0D_params_override.copy()
     params_override.update(build_0D_parameters_from_config(configuration))
-
     # --- Run simulations
+    logger.log('Launching 0D simulations for config ' + format_folder_name(configuration))
     uo.runSimulation(
         N=N_samples,
         param_lst=list_parameters,
         output_folder=output_folder,
         file=modelica_file_path,
-        LVAD=LVAD_simulation,
-        om_sim_settings=om_simulation_settings,
+        LVAD=lvad,
+        om_build_settings=om_build_settings,
         override_params=params_override,
-        log=logger.log,
+        log=simlogger.log,
         om_runtime_args=om_runtime_args
     )
-
-    # --- Save settings & information
-    logger.write()
-    with open(path.join(output_folder, '0-simulation_settings.json'), 'w') as f:
-        json.dump(om_simulation_settings, f, indent=4)
-    with open(path.join(output_folder, '0-params_0D_override.json'), 'w') as f:
+    logger.log('Simulations completed...')
+    # --- Save settings & output
+    simlogger.write()
+    with open(path.join(output_folder, '1-simulation_settings.json'), 'w') as f:
+        json.dump(om_build_settings, f, indent=4)
+    with open(path.join(output_folder, '1-params_0D_override.json'), 'w') as f:
         json.dump(global_0D_params_override, f, indent=4)
 
     # ------------- PREPROCESSING
     os.chdir(output_folder)
+    logger.log('Launching pre-processing for configuration ' + format_folder_name(configuration))
     p = subprocess.Popen(['python3', preprocessing_script_path],
                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     stdout, stderr = p.communicate()
-    with open('1-preprocessing-stdout.txt', 'w') as f:
+    with open('2-preprocessing-stdout.txt', 'w') as f:
         f.write(stdout.decode() + '\n' + stderr.decode())
+    logger.log('Pre-processing has ended')
 
+    # ------------- DNN TRAINING
+    logger.log('Launching DNN training for configuration ' + format_folder_name(configuration))
+
+    logger.write()
+
+# ------------------------------------------------------- #
+#                        SCRIPTING                        #
+# ------------------------------------------------------- #
 
 if __name__ == '__main__':
     main()
-
