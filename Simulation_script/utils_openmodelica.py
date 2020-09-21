@@ -136,7 +136,7 @@ def runSimulation(N, param_lst, output_folder, file, LVAD, samplingfun=samplePar
         # Specify output file
         output_file = output_file_template.format(n)
         # Simulate without build
-        cmd = "./" + model_name + " -override="+override_cmd+override_params \
+        cmd = "./" + model_name + " -override="+override_cmd+','+override_params \
                    + " -r="+output_file + " -emit_protected " + om_runtime_args
         log("<RUNNING> " + cmd)
         start = timer()
@@ -147,6 +147,7 @@ def runSimulation(N, param_lst, output_folder, file, LVAD, samplingfun=samplePar
     writeParamData(param_data, output_folder)
 
     return omc
+
 
 def writeParamData(data, output_folder):
     file_path = output_folder + "/" + "parameters.txt"
