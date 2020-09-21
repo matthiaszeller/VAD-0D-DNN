@@ -16,7 +16,7 @@ class OMServerHanlder(object):
 
     monitored_omc_ps: List[psutil.Process]
 
-    def __init__(self, timeout=10, logfun=None):
+    def __init__(self, timeout=15, logfun=None):
         """
         :param float timeout: time after which to kill the OM session in seconds
         """
