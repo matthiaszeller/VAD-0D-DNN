@@ -41,6 +41,9 @@ import random
 import json
 import subprocess
 import sys
+import pandas as pd
+import argparse
+from datetime import datetime
 
 # Reduce Tensorflow verbosity
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -75,14 +78,14 @@ N_processes = multiprocessing.cpu_count()
 # --- Pump configurations (pump speed, LVAD, artificial Pulse, DNN architectures)
 # DNN architectures: list of tuples (hidden_layers, neurons, aks)
 configurations = [
-    (rpm, True, True, [(2, 16, 50), (3, 8, 50)])
-    for rpm in [4000, 5000, 6000]
+    (rpm, True, True, [(2, 64, 50)])
+    for rpm in [4000, 4100, 4200, 4300, 4400, 4500]
 ]
 
 # -------------------- SIMULATION SETUP
 
 # The number of simulations in a single dataset
-N_samples = 100
+N_samples = 1000
 
 # OpenModelica build settings: simulation time, number of intervals, etc...
 om_build_settings = {
@@ -178,7 +181,7 @@ def prompt_initial_validate():
         display(var, globals())
 
     print(' - configurations:')
-    print('\tRPM,   LVAD, AP,   Architecture')
+    print('\tRPM,   LVAD, AP,   Architectures')
     for c in configurations:
         print('\t' + str(c))
 
@@ -188,10 +191,29 @@ def prompt_initial_validate():
 
 
 def main():
+    global root_output_folder
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-l', '--logs',
+                        help='concatenate logs, write in file and exit',
+                        type=str, default=None)
+    parser.add_argument('-p', '--path',
+                        help='override the root folder, mainly used for debugging',
+                        type=str, default=None)
+    args = parser.parse_args()
+
+    if args.path is not None:
+        root_output_folder = args.path
+    if args.logs:
+        print('Concatenating logs...')
+        df = concat_logs(root_output_folder)
+        save_concat_logs(args.logs, df)
+        return
+
     prompt_initial_validate()
 
     # Prepare
-    mainlogger = Logger(path.join(root_output_folder, 'mainlog.txt'), print=True)
+    mainlogger = Logger(path.join(root_output_folder, 'mainlog.log'), print=True)
 
     if not path.exists(root_trash_folder):
         mainlogger.log('Creating trash folder...')
@@ -210,7 +232,10 @@ def main():
 
     server_handler.kill_sessions()
 
+    mainlogger.log('Concatenating log files...')
     mainlogger.flush()
+    df = concat_logs(root_output_folder)
+    save_concat_logs(path.join(root_output_folder, 'logs.log'), df)
 
 
 # ------------------------------------------------------- #
@@ -290,17 +315,20 @@ def pipeline(configuration):
     if status < 0:
         logger.log('<ERROR> An error occured while checking ' + folder_name +
                    f', please check by hand [status {status}]')
+        logger.flush()
         return
 
     # ------------- SIMULATION DATA GENERATION
     if status < 1:
         step1_0D_generation(output_folder, configuration, logger)
+    elif status == 1:
+        logger.log('Resuming pipeline at step ' + str(status) + ' for ' + folder_name)
 
     # ------------- PREPROCESSING
     if status < 2:
         step2_preprocessing(output_folder, logger)
-    else:
-        logger.log('Resuming pipeline at step ' + str(status))
+    elif status == 2:
+        logger.log('Resuming pipeline at step ' + str(status) + ' for ' + folder_name)
 
     # ------------- DNN TRAINING
     rpm, lvad, artpulse, architectures = configuration
@@ -311,6 +339,10 @@ def pipeline(configuration):
 
 
 def step1_0D_generation(output_folder, configuration, logger):
+    def callback(n, step=1000):
+        if n % step == 0:
+            logger.log(f'Simulation progression: {n}/{N_samples}')
+
     simlogger = Logger(path.join(output_folder, '1-log_data_generation.log'))
     rpm, lvad, artpulse, architectures = configuration
 
@@ -333,9 +365,10 @@ def step1_0D_generation(output_folder, configuration, logger):
         om_build_settings=om_build_settings,
         override_params=params_override,
         log=simlogger.log,
-        om_runtime_args=om_runtime_args
+        om_runtime_args=om_runtime_args,
+        callback=callback
     )
-    logger.log('Simulations completed...')
+    logger.log('Simulations completed for config ' + path.basename(output_folder))
 
     # --- Save settings & output
     simlogger.flush()
@@ -367,7 +400,7 @@ def step3_train_dnns(output_folder, architectures, logger):
         if path.exists(dnn_data_folder):
             logger.log(f'Architecture {folder_name} already exists, skipping...')
             continue
-        logger.log(f'Training architecture {i+1}/{n} - {dnn_data_folder}')
+        logger.log(f'Training architecture {i+1}/{n} - {folder_name}')
         os.mkdir(dnn_data_folder)
         os.chdir(dnn_data_folder)
 
@@ -401,6 +434,58 @@ def step3_train_dnns(output_folder, architectures, logger):
 
     logger.log('DNN training completed...')
 
+
+# ------------------------------------------------------- #
+#                     POST-PROCESSING                     #
+# ------------------------------------------------------- #
+
+
+def concat_logs(root_folder, level='main'):
+    """
+    :param root_folder:
+    :param str level: main = concat main logs (mainlog.log and 0-log.log)
+                      all = concat all logs (all files ending in .log)
+    :return:
+    """
+    ls = [path.join(root_folder, 'mainlog.log')]
+    filterfun = lambda fname: fname == '0-log.log'
+    if level == 'all':
+        # TODO: doesn't work
+        filterfun = lambda fname: fname.endswith('.log')
+        raise NotImplementedError
+
+    for root, folders, files in os.walk(root_folder):
+        # Skip trash folder
+        if 'trash' in root:
+            continue
+
+        logs = [path.join(root, fname) for fname in filter(filterfun, files)]
+        ls.extend(logs)
+
+    ls = set(ls)
+    df = []
+    for fpath in ls:
+        print(fpath)
+        df.append(pd.read_csv(fpath, header=None, sep=';'))
+
+    df = pd.concat(df)
+    df.columns = ['pid', 'time', 'msg']
+    df.sort_values('time', inplace=True, ignore_index=True)
+    df.time = df.time.apply(datetime.fromtimestamp)
+    return df
+
+
+def save_concat_logs(fpath, df):
+    """
+    :param str fpath:
+    :param pandas.DataFrame df:
+    :return:
+    """
+    df.to_csv(
+        fpath,
+        sep=';',
+        index=False
+    )
 
 # ------------------------------------------------------- #
 #                        SCRIPTING                        #

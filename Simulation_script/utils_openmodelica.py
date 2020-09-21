@@ -65,7 +65,8 @@ def sampleParamsEpsilon(param_lst):
 
 
 def runSimulation(N, param_lst, output_folder, file, LVAD, samplingfun=sampleParams,
-                  om_build_settings=None, override_params=None, log=None, om_runtime_args=''):
+                  om_build_settings=None, override_params=None, log=None,
+                  om_runtime_args='', callback=None):
     """Generate a dataset of `N` samples . The process involves two steps:
     1- Build the model. It creates an executable in the build folder.
     2- Run N simulations (does not require compilation).
@@ -73,11 +74,21 @@ def runSimulation(N, param_lst, output_folder, file, LVAD, samplingfun=samplePar
     according to the parameters specified in param_lst.
     Note: we can run simulation without build by using ./exec_name -override=paramName=ParamValue
 
+    :param int N: number of simulation samples to generate
+    :param list[Parameter] param_lst: simulation parameters that are sampled with `samplingfun`
+    :param samplingfun: function that samples the parameters in `param_lst`
+    :param str file: path to the .mo file containing the model source code
+    :param bool LVAD: whether to use the model with the LVAD
     :param dict[str, any] override_params: dictionnary of 0D model parameters to override
     :param dict[str, any] om_build_settings: dictionnary of OpenModelica simulation settings
+    :param str om_runtime_args: additional arguments used when running the modelica executable
+    :param log: callable taking an str argument (message)
+    :param callback: callable taking an int argument (progression of data generation, number of samples)
     """
     if log is None:
         log = q
+    if callback is None:
+        callback = lambda e: None
 
     # 1. Create folders
     try:
@@ -143,6 +154,7 @@ def runSimulation(N, param_lst, output_folder, file, LVAD, samplingfun=samplePar
         res = os.system(cmd)
         end = timer()
         log("Simulation time (n={}): {:.5}".format(n, end-start))
+        callback(n+1)
 
     writeParamData(param_data, output_folder)
 
