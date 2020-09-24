@@ -25,6 +25,7 @@ class OMServerHanlder(object):
         self._sleep_time = 4
         self._omc_session_timeout = timeout
         self._logfun = (lambda _: None) if logfun is None else logfun
+        self.__maxiter = 1000
 
         thread = threading.Thread(target=self.__loop, args=())
         thread.daemon = True
@@ -38,13 +39,14 @@ class OMServerHanlder(object):
         self._logfun(f'OMServerHanlder: Killed {N} remaining OM sessions')
 
     def __loop(self):
-        # ---- Monitor
-        self.__update_processes()
-        # --- Kill if necessary
-        self.__kill_outdated_sessions()
-        # --- Loop
-        sleep(self._sleep_time)
-        self.__loop()
+        while True:
+            # ---- Monitor
+            self.__update_processes()
+            # --- Kill if necessary
+            self.__kill_outdated_sessions()
+            # --- Sleep
+            print('here i am')
+            sleep(self._sleep_time)
 
     def __kill_outdated_sessions(self):
         t = time()
