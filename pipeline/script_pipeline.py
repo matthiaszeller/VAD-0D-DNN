@@ -15,20 +15,19 @@ General script notions:
     - there is a pipeline for each configuration
     - a dataset is caracterized by a specific configuration
     - a configuration is a tuple (int RPM, bool LVAD, bool ArtificialPulse, list DNNArchitectures)
-    - you can run the script with the same `root_output_folder`, but don't change `N_samples` in that case,
+    - you can run the script several times with the same `root_output_folder`, but don't change `N_samples` in that case,
       this is possible because the script does not recompute what has already been computed
+    - do NOT rename/move folders nor any file created by the script
 
 Example of usage:
-    1. set `configurations` with only 1 DNN architecture to make the first run fast
+    1. set `configurations` with only 1 DNN architecture (you can train other DNNs later)
     2. change other script variables according to what you need (in `SETUP` section)
     3. run this script
     4. change ONLY the variable `configurations` by adding some DNN architectures
-    5. the script trains the additional DNNs (0D data is not computed again)
+    5. re-run the script - it trains the additional DNNs (0D data is not computed again)
 """
 
 # TODO: data integrity (or at least procedure completeness) check
-# TODO: kill omc servers that never stop
-# TODO: make pipeline function verbose
 
 # ======================================================= #
 # ----------------------- IMPORTS ----------------------- #
@@ -69,7 +68,7 @@ import utils_deeplearning as ud
 # -------------------- GENERAL SETUP
 
 # --- Root folder containing all data
-root_output_folder = '/media/maousi/Data/tmp/pipelining'
+root_output_folder = '/media/maousi/Raw/lvad'
 root_trash_folder = path.join(root_output_folder, 'trash')
 
 # --- Multiprocessing
@@ -79,13 +78,14 @@ N_processes = multiprocessing.cpu_count()
 # DNN architectures: list of tuples (hidden_layers, neurons, aks)
 configurations = [
     (rpm, True, True, [(2, 64, 50)])
-    for rpm in [4000, 4100, 4200, 4300, 4400, 4500]
+    for rpm in range(4600, 6100, 100)
+    #[4000, 4100, 4200, 4300, 4400, 4500]
 ]
 
 # -------------------- SIMULATION SETUP
 
 # The number of simulations in a single dataset
-N_samples = 1000
+N_samples = 10000
 
 # OpenModelica build settings: simulation time, number of intervals, etc...
 om_build_settings = {
@@ -208,6 +208,7 @@ def main():
         print('Concatenating logs...')
         df = concat_logs(root_output_folder)
         save_concat_logs(args.logs, df)
+        print('Exiting...')
         return
 
     prompt_initial_validate()
@@ -343,7 +344,7 @@ def step1_0D_generation(output_folder, configuration, logger):
         if n % step == 0:
             logger.log(f'Simulation progression: {n}/{N_samples}')
 
-    simlogger = Logger(path.join(output_folder, '1-log_data_generation.log'))
+    simlogger = Logger(path.join(output_folder, '1-log_data_generation.log'), buffer_size=200)
     rpm, lvad, artpulse, architectures = configuration
 
     # --- Trash data (modelica build and exec files)

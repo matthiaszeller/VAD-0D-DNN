@@ -45,7 +45,6 @@ class OMServerHanlder(object):
             # --- Kill if necessary
             self.__kill_outdated_sessions()
             # --- Sleep
-            print('here i am')
             sleep(self._sleep_time)
 
     def __kill_outdated_sessions(self):
