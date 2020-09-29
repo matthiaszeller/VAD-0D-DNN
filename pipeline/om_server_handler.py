@@ -56,6 +56,13 @@ class OMServerHanlder(object):
                 self._logfun(f'OMServerHanlder: Killed OM session [pid {pid}]')
 
     def __update_processes(self):
-        self.monitored_omc_ps = [
-            ps for ps in psutil.process_iter() if ps.name() == 'omc'
-        ]
+        # Technical note: must use use try-except, since the time
+        #                 delay between calling process_iter() and ps.name()
+        #                 may be enough for a given process to terminate
+        try:
+            self.monitored_omc_ps = [
+                ps for ps in psutil.process_iter() if ps.name() == 'omc'
+            ]
+        except psutil.Error:
+            # Ignore until next call to __update_processes
+            self.monitored_omc_ps = []
