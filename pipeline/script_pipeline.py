@@ -3,31 +3,40 @@
     - simulation data generation
     - data pre-processing
     - DNN training
-    - DNN testing
+    - DNN testing - TODO: implement test data generation
 
 When running the script, you are first prompted to continue.
 Advice:
-    - to do some tests, set `N_samples` to a very low value
+    - to do some tests, set `N_samples` to a very low value (but this will trigger error for DNN training)
     - read the configuration displayed when you run the script
-    - use `script_stats_dnn.py` to find the best architectures first
+    - use `script_stats_dnn.py` to find the best architectures before running this script
+    - don't run more than `N_processes` configurations at once, otherwise somehow the HDD gets busy ?
+        # TODO: investigate the problem with HDD
+    - you can use `script_check_sim_data.py` to check consistency of simulation data
 
 General script notions:
-    - there is a pipeline for each configuration
-    - a dataset is caracterized by a specific configuration
-    - a configuration is a tuple (int RPM, bool LVAD, bool ArtificialPulse, list DNNArchitectures)
-    - you can run the script several times with the same `root_output_folder`, but don't change `N_samples` in that case,
-      this is possible because the script does not recompute what has already been computed
-    - do NOT rename/move folders nor any file created by the script
+    - A dataset is made of `N_samples` simulation files, preprocessing files and DNN data
+    - A dataset is characterized by its global simulation settings: pump speed (RPM),
+      whether the LVAD is used, and whether artificial pulse (AP) is activated
+    - The word "pipeline" used in this script refers to generating data for a single dataset
+    - This script runs `N_processes` and assigns 1 pipeline to each process
+    - You can run the script several times with the same `root_output_folder`,
+      but don't change `N_samples` in that case
+    - If you run this script in a folder with existing data, it tries to resume the pipeline
+      and outputs an error if the pipeline cannot be resumed
+    - Do NOT rename/move folders nor any file created by the script
 
 Example of usage:
-    1. set `configurations` with only 1 DNN architecture (you can train other DNNs later)
+    1. set `configurations` with only 1 DNN architecture (you can train other DNNs later),
+       and at most `N_processes` configurations
     2. change other script variables according to what you need (in `SETUP` section)
     3. run this script
-    4. change ONLY the variable `configurations` by adding some DNN architectures
+    4. repeat from 1. and set the other configurations you want (don't change N_samples)
+    5. once all simulation data is computed, you can now train additional DNN configurations,
+       set the `configurations` variable accordingly
     5. re-run the script - it trains the additional DNNs (0D data is not computed again)
 """
 
-# TODO: data integrity (or at least procedure completeness) check
 
 # ======================================================= #
 # ----------------------- IMPORTS ----------------------- #
@@ -193,6 +202,7 @@ def prompt_initial_validate():
 def main():
     global root_output_folder
 
+    # ------------- SCRIPT ARGUMENTS
     parser = argparse.ArgumentParser()
     parser.add_argument('-l', '--logs',
                         help='concatenate logs, write in file and exit',
@@ -211,10 +221,12 @@ def main():
         print('Exiting...')
         return
 
+    # ------------- USER INTERACTION
     prompt_initial_validate()
 
-    # Prepare
-    mainlogger = Logger(path.join(root_output_folder, 'mainlog.log'), print=True)
+    # ------------- PREPARATION
+    mainlogger = Logger(path.join(root_output_folder, 'mainlog.log'),
+                        print=True, buffer_size=0)
 
     if not path.exists(root_trash_folder):
         mainlogger.log('Creating trash folder...')
@@ -226,17 +238,25 @@ def main():
     mainlogger.log('Starting OMServerHanlder...')
     server_handler = OMServerHanlder(logfun=mainlogger.log)
 
-    # Go!
+    # ------------- RUN PIPELINES
     mainlogger.log('Launching processes from pool of size ' + str(N_processes))
     ps_pool = multiprocessing.Pool(processes=N_processes)
     ps_pool.map(pipeline, configurations)
 
+    # ------------- TERMINATE
     server_handler.kill_sessions()
 
+    # Concatenate log files
     mainlogger.log('Concatenating log files...')
-    mainlogger.flush()
     df = concat_logs(root_output_folder)
     save_concat_logs(path.join(root_output_folder, 'logs.log'), df)
+
+    # Remove trash files
+    if path.exists(root_trash_folder):
+        mainlogger.log('Deleting trash data...')
+        os.rmdir(root_trash_folder)
+
+    mainlogger.flush()
 
 
 # ------------------------------------------------------- #
@@ -309,7 +329,7 @@ def pipeline(configuration):
     # ------------- PATH & LOGGING CONFIGURATION
     folder_name = format_folder_name(configuration)
     output_folder = path.join(root_output_folder, folder_name)
-    logger = Logger(path.join(output_folder, '0-log.log'), print=True)
+    logger = Logger(path.join(output_folder, '0-log.log'), print=True, buffer_size=0)
 
     # ------------- PIPELINE STATUS
     status = check_pipeline_status(output_folder, logger)
@@ -336,6 +356,7 @@ def pipeline(configuration):
     step3_train_dnns(output_folder, architectures, logger)
 
     # ------------- TERMINATE
+    # Flush the buffer
     logger.flush()
 
 
