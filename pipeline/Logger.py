@@ -15,6 +15,7 @@ class Logger(object):
         >>> # stuff that outputs on stdout...
         >>> sys.stdout = old_stdout
     """
+    # TODO: make this class a context manager !
 
     def __init__(self, filepath, print=False, buffer_size=50):
         """

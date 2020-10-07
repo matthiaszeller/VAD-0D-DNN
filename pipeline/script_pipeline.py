@@ -10,8 +10,6 @@ Advice:
     - to do some tests, set `N_samples` to a very low value (but this will trigger error for DNN training)
     - read the configuration displayed when you run the script
     - use `script_stats_dnn.py` to find the best architectures before running this script
-    - don't run more than `N_processes` configurations at once, otherwise somehow the HDD gets busy ?
-        # TODO: investigate the problem with HDD
     - you can use `script_check_sim_data.py` to check consistency of simulation data
 
 General script notions:
@@ -35,8 +33,18 @@ Example of usage:
     5. once all simulation data is computed, you can now train additional DNN configurations,
        set the `configurations` variable accordingly
     5. re-run the script - it trains the additional DNNs (0D data is not computed again)
+
+Warning:
+    * You must edit `setup_preprocessing.py` according to settings you chose
+      in this script (time discretization according to values in `om_build_settings`)
+
 """
 
+# TODO: a huge bottleneck seems to be pre-processing when using an HDD:
+#       very (!) inefficient if all processes read the N_samples at same time
+#       how to fix?
+#           - lock resources on a single process when it is at the stage of pre-processing
+#             maybe improve since the N_samples are probably close to each other in the disk
 
 # ======================================================= #
 # ----------------------- IMPORTS ----------------------- #
@@ -133,6 +141,12 @@ elif not path.exists(root_output_folder):
 preprocessing_script_path = path.join(project_path, 'Pre-processing', 'script_createdataset.py')
 
 
+# -------------------- MINIMAL REQUIRED DNN FOLDER CONTENTS
+dnn_folder_contents = [ # TODO: revise minimal required folder contents
+    'history.bin', 'DNN_0D_Model.h5', 'Xtest_norm.npy',
+    'Ytest_norm.npy', 'parammins.npy', 'parammaxs.npy'
+]
+
 # ========================================================= #
 # ---------------------- SCRIPT BODY ---------------------- #
 # ========================================================= #
@@ -205,11 +219,14 @@ def main():
     # ------------- SCRIPT ARGUMENTS
     parser = argparse.ArgumentParser()
     parser.add_argument('-l', '--logs',
-                        help='concatenate logs, write in file and exit',
+                        help='file name in which to concatenate logs, write in file and exit',
                         type=str, default=None)
     parser.add_argument('-p', '--path',
                         help='override the root folder, mainly used for debugging',
                         type=str, default=None)
+    parser.add_argument('-s', '--status',
+                        help='print status at the beginning',
+                        action='store_true')
     args = parser.parse_args()
 
     if args.path is not None:
@@ -222,6 +239,20 @@ def main():
         return
 
     # ------------- USER INTERACTION
+    if args.status:
+        class Dummy:
+            def log(self, msg):
+                print(msg)
+
+        print('Pipeline status:')
+        for folder in os.listdir(root_output_folder):
+            folder_path = os.path.join(root_output_folder, folder)
+            if 'trash' in folder or not os.path.isdir(folder_path):
+                continue
+
+            status = check_pipeline_status(folder_path, Dummy())
+            print('\t', folder, status)
+
     prompt_initial_validate()
 
     # ------------- PREPARATION
@@ -295,12 +326,8 @@ def check_pipeline_status(output_folder, logger):
                  -x = a problem occured at step x
     """
     def check_list(files, checkfun=path.exists):
-        fdic = {
-            f: path.join(output_folder, f) for f in files
-        }
-        return {
-            f: checkfun(fpath) for f, fpath in fdic.items()
-        }
+        paths = map(lambda fp: os.path.join(output_folder, fp), files)
+        return list(map(checkfun, paths))
 
     if not path.exists(output_folder):
         return 0
@@ -308,19 +335,22 @@ def check_pipeline_status(output_folder, logger):
     step = 1
     step1 = check_list(['outputs', 'parameters.txt'])
     if any(step1) and not all(step1):
-        logger.log('One file is missing')
+        logger.log('Either `outputs/` or `parameters.txt` is missing')
         return -step
     # Check all output files are present
     output_files = os.listdir(path.join(output_folder, 'outputs'))
     if len(output_files) != N_samples:
         logger.log('`N_samples` do not match with the content of ' + path.basename(output_folder))
         return -step
+    # step 1 completed
 
     step = 2
     step2 = check_list(['X.mat', 'Y.mat'])
     if any(step2) and not all(step2):
         logger.log('One pre-processing file is missing')
         return -step
+    elif not any(step2):
+        return 1
 
     return step
 
@@ -356,6 +386,7 @@ def pipeline(configuration):
     step3_train_dnns(output_folder, architectures, logger)
 
     # ------------- TERMINATE
+    logger.log('End of pipeline for ' + folder_name)
     # Flush the buffer
     logger.flush()
 
@@ -413,17 +444,37 @@ def step2_preprocessing(output_folder, logger):
 
 
 def step3_train_dnns(output_folder, architectures, logger):
+    def check_folder_contents(folder, file_list):
+        """Returns True if all files in `file_list` are in `folder`, False otherwise."""
+        list_dir = os.listdir(folder)
+        exists_ls = [file in list_dir for file in file_list]
+        return all(exists_ls)
+
     logger.log('Launching DNN training for configuration ' + path.basename(output_folder))
     n = len(architectures)
 
     for i, (hlayers, neurons, aks) in enumerate(architectures):
+        # --- Setup paths
         folder_name = format_dnn_folder_name((hlayers, neurons, aks))
         dnn_data_folder = path.join(output_folder, folder_name)
+
+        # --- Check if DNN data already exists
         if path.exists(dnn_data_folder):
-            logger.log(f'Architecture {folder_name} already exists, skipping...')
-            continue
+            ls = os.listdir(dnn_data_folder)
+            if len(ls) > 0:
+                if check_folder_contents(dnn_data_folder, dnn_folder_contents):
+                    logger.log(f'Architecture {folder_name} already exists, skipping...')
+                else:
+                    logger.log(f'<WARNING> Problem encountered in {folder_name} '
+                               f'- some files are missing. Please check by hand. Skipping...')
+                continue
+            # else: len(ls) == 0, the folder exists and is empty,
+            # we don't want to abort this step
+        else:
+            os.mkdir(dnn_data_folder)
+
+        # --- Setup
         logger.log(f'Training architecture {i+1}/{n} - {folder_name}')
-        os.mkdir(dnn_data_folder)
         os.chdir(dnn_data_folder)
 
         # Redirect stdout to a log file for the training/testing procedure
@@ -431,6 +482,7 @@ def step3_train_dnns(output_folder, architectures, logger):
         old_stdout = sys.stdout
         sys.stdout = dnnlogger
 
+        # --- DNN training & testing
         (normdata, (Xtest, Ytest), model) = ud.train_dnn(
             perccoef=0,
             selected_aks=aks,

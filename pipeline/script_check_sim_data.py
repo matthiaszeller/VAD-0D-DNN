@@ -53,6 +53,7 @@ def parse_config_from_folder_name(folder):
 
     folder = os.path.basename(folder)
     features = folder.split('_')
+    # TODO: parse other config features (bool LVAD, bool AP)
     config = {
         'rpm': int(features[0])
     }
@@ -137,5 +138,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-
 
