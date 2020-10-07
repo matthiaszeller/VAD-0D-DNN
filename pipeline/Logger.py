@@ -1,6 +1,6 @@
 import os
 import time
-
+import sys
 
 class Logger(object):
     """Convenient object to manage logging (writing in file, print on stdout).
@@ -8,16 +8,23 @@ class Logger(object):
     WARNING: you must call `flush()` before deleting a `Logger` instance, otherwise data
     retained in the buffer will be lost.
 
-    Note: `Logger` can be used to redirect stdout:
+    Note: `Logger` can be used to redirect stdout (if argument print is False):
         >>> import sys
         >>> old_stdout = sys.stdout
         >>> sys.stdout = Logger(...)
         >>> # stuff that outputs on stdout...
         >>> sys.stdout = old_stdout
+    WARNING: if you want to redirect std output but still want to print on screen,
+    you must use `set_stdout` and provide the `old_stdout`. Undo this by setting `None`:
+        >>> old_stdout = sys.stdout
+        >>> logger.set_stdout(old_stdout)
+        >>> # code that outputs on stdout...
+        >>> sys.stdout = old_stdout
+        >>> logger.set_stdout(None)
     """
     # TODO: make this class a context manager !
 
-    def __init__(self, filepath, print=False, buffer_size=50):
+    def __init__(self, filepath, print=False, buffer_size=50, stdout=None):
         """
         :param str filepath: the file to write in
         :param bool print: whether to print on stdout in addition to writing in `filepath`
@@ -29,6 +36,13 @@ class Logger(object):
         self.__k = 0
         self.__logfun = self.__log_and_print if print else self.__log
         self.__buffer_size = buffer_size
+        self.__stdout = stdout
+
+    def set_stdout(self, stdout):
+        """Use this function if you need to redirect catch the standard output and
+        print at the same time (otherwise, infinite loop).
+        Set stdout to None to display with `print`."""
+        self.__stdout = stdout
 
     def log(self, msg):
         self.__logfun(msg)
@@ -55,7 +69,12 @@ class Logger(object):
         self.buffer.append(
             (self.pid, t, msg)
         )
-        print(os.getpid(), msg)
+        if self.__stdout is None:
+            print(self.pid, msg)
+        else:
+            self.__stdout.write(f'{os.getpid()}, {msg}')
+            self.__stdout.write('\n')
+
         self.__k += 1
         if self.__k > self.__buffer_size:
             self.flush()

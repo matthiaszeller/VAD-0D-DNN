@@ -37,7 +37,7 @@ Example of usage:
 Warning:
     * You must edit `setup_preprocessing.py` according to settings you chose
       in this script (time discretization according to values in `om_build_settings`)
-
+    * It's currently only possible to provide pump speed to the DNN (i.e. DNN is unaware of artificial pulse)
 """
 
 # TODO: a huge bottleneck seems to be pre-processing when using an HDD:
@@ -60,6 +60,7 @@ import sys
 import pandas as pd
 import argparse
 from datetime import datetime
+import scipy.io as sio
 
 # Reduce Tensorflow verbosity
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -94,9 +95,8 @@ N_processes = multiprocessing.cpu_count()
 # --- Pump configurations (pump speed, LVAD, artificial Pulse, DNN architectures)
 # DNN architectures: list of tuples (hidden_layers, neurons, aks)
 configurations = [
-    (rpm, True, True, [(2, 64, 50)])
+    (rpm, True, True)
     for rpm in range(4600, 6100, 100)
-    #[4000, 4100, 4200, 4300, 4400, 4500]
 ]
 
 # -------------------- SIMULATION SETUP
@@ -158,14 +158,19 @@ dnn_folder_contents = [ # TODO: revise minimal required folder contents
 
 
 def format_folder_name(configuration):
-    rpm, lvad, artpulse, _ = configuration
+    rpm, lvad, artpulse = configuration
     lvad = '_LVAD' if lvad else ''
     artpulse = '_AP' if artpulse else ''
     return f'{rpm}{lvad}{artpulse}'
 
 
+def parse_folder_name(name):
+    """Returns RPM of dataset"""
+    return int(name.split('_')[0])
+
+
 def build_0D_parameters_from_config(configuration):
-    rpm, lvad, artpulse, _ = configuration
+    rpm, lvad, artpulse = configuration
     dic = {}
     # --- Pump speed
     dic['Param_LVAD_RPM'] = rpm
@@ -225,8 +230,12 @@ def main():
                         help='override the root folder, mainly used for debugging',
                         type=str, default=None)
     parser.add_argument('-s', '--status',
-                        help='print status at the beginning',
+                        help='print status of each dataset before running the script',
                         action='store_true')
+    parser.add_argument('--train', action='store_true',
+                        help='skip step 1 & 2 and concatenate available datasets')
+    parser.add_argument('aks', type=int,
+                        help='number of aks coeffs to select (control DNN input size)')
     args = parser.parse_args()
 
     if args.path is not None:
@@ -240,6 +249,7 @@ def main():
 
     # ------------- USER INTERACTION
     if args.status:
+        # Print status of each dataset
         class Dummy:
             def log(self, msg):
                 print(msg)
@@ -258,34 +268,64 @@ def main():
     # ------------- PREPARATION
     mainlogger = Logger(path.join(root_output_folder, 'mainlog.log'),
                         print=True, buffer_size=0)
+    mainlogger.log('Initialization...')
 
-    if not path.exists(root_trash_folder):
-        mainlogger.log('Creating trash folder...')
-        os.mkdir(root_trash_folder)
-    else:
-        mainlogger.log('Trash folder detected')
+    if not args.train:
+        if not path.exists(root_trash_folder):
+            mainlogger.log('Creating trash folder...')
+            os.mkdir(root_trash_folder)
+        else:
+            mainlogger.log('Trash folder detected')
 
-    # Run a thread in background to kill OpenModelica sessions that never close
-    mainlogger.log('Starting OMServerHanlder...')
-    server_handler = OMServerHanlder(logfun=mainlogger.log)
+        # Run a thread in background to kill OpenModelica sessions that never close
+        mainlogger.log('Starting OMServerHanlder...')
+        server_handler = OMServerHanlder(logfun=mainlogger.log)
 
-    # ------------- RUN PIPELINES
-    mainlogger.log('Launching processes from pool of size ' + str(N_processes))
-    ps_pool = multiprocessing.Pool(processes=N_processes)
-    ps_pool.map(pipeline, configurations)
+        # ------------- RUN PIPELINES
+        mainlogger.log('Launching processes from pool of size ' + str(N_processes))
+        ps_pool = multiprocessing.Pool(processes=N_processes)
+        ps_pool.map(pipeline, configurations)
 
-    # ------------- TERMINATE
-    server_handler.kill_sessions()
+        server_handler.kill_sessions()
+        # Remove trash files
+        if path.exists(root_trash_folder):
+            mainlogger.log('Deleting trash data...')
+            os.rmdir(root_trash_folder)
+
+    # ------------- Concatenate datasets
+    os.chdir(root_output_folder)
+    root_files = os.listdir('.')
+    # Keep folders
+    root_files = filter(lambda fp: os.path.isdir(fp), root_files)
+    # Don't keep trash
+    root_files = filter(lambda fp: 'trash' not in fp, root_files)
+    # Keep only complete datasets
+    root_files = filter(lambda fp: check_pipeline_status(fp, mainlogger) == 2, root_files)
+
+    root_files = list(root_files)
+    datasets = {parse_folder_name(folder): folder for folder in root_files}
+
+    oldstdout = sys.stdout
+    sys.stdout = mainlogger
+    mainlogger.set_stdout(oldstdout)
+    X, Y = ud.generate_dataset(datasets, args.aks, perc_coef=None)
+    # Save
+    dataset_description = {
+        'RPMs': list(datasets.keys()),
+        'aks': args.aks
+    }
+    sio.savemat('dataset.mat', mdict={
+        'description': dataset_description,
+        'X': X,
+        'Y': Y,
+    })
+    sys.stdout = oldstdout
+    mainlogger.set_stdout(None)
 
     # Concatenate log files
     mainlogger.log('Concatenating log files...')
     df = concat_logs(root_output_folder)
     save_concat_logs(path.join(root_output_folder, 'logs.log'), df)
-
-    # Remove trash files
-    if path.exists(root_trash_folder):
-        mainlogger.log('Deleting trash data...')
-        os.rmdir(root_trash_folder)
 
     mainlogger.flush()
 
@@ -320,7 +360,7 @@ def gen_trash_folder(root_trash_folder, configuration=None):
 def check_pipeline_status(output_folder, logger):
     """Check the advancement status of the output_folder.
     :param output_folder: the data folder for a specific configuration
-    :return: int, 0 = output_folder does not exist
+    :return: int, 0 = pipeline has not begun (no folder or empty folder)
                   1 = simulation data is generated
                   2 = pre-processing completed
                  -x = a problem occured at step x
@@ -332,41 +372,42 @@ def check_pipeline_status(output_folder, logger):
     if not path.exists(output_folder):
         return 0
 
-    step = 1
-    step1 = check_list(['outputs', 'parameters.txt'])
-    if any(step1) and not all(step1):
-        logger.log('Either `outputs/` or `parameters.txt` is missing')
-        return -step
-    # Check all output files are present
-    output_files = os.listdir(path.join(output_folder, 'outputs'))
-    if len(output_files) != N_samples:
-        logger.log('`N_samples` do not match with the content of ' + path.basename(output_folder))
-        return -step
-    # step 1 completed
-
-    step = 2
     step2 = check_list(['X.mat', 'Y.mat'])
     if any(step2) and not all(step2):
-        logger.log('One pre-processing file is missing')
-        return -step
-    elif not any(step2):
-        return 1
+        return -2
+    elif all(step2):
+        return 2
 
-    return step
+    step1 = check_list(['outputs', 'parameters.txt'])
+    if any(step1):
+        if not all(step1):
+            logger.log('Either `outputs/` or `parameters.txt` is missing')
+            return -1
+        # Check all output files are present
+        output_files = os.listdir(path.join(output_folder, 'outputs'))
+        if len(output_files) != N_samples:
+            logger.log('`N_samples` do not match with the content of ' + path.basename(output_folder))
+            return -1
+
+    return 0
 
 
 def pipeline(configuration):
     # ------------- PATH & LOGGING CONFIGURATION
     folder_name = format_folder_name(configuration)
     output_folder = path.join(root_output_folder, folder_name)
-    logger = Logger(path.join(output_folder, '0-log.log'), print=True, buffer_size=0)
+    # WARNING: don't set this buffer size to 0 (running simulations requires an empty folder)
+    logger = Logger(path.join(output_folder, '0-log.log'), print=True, buffer_size=2)
 
     # ------------- PIPELINE STATUS
     status = check_pipeline_status(output_folder, logger)
     if status < 0:
         logger.log('<ERROR> An error occured while checking ' + folder_name +
-                   f', please check by hand [status {status}]')
+                   f', please check by hand [status {status}]. Abortion...')
         logger.flush()
+        return
+    elif status == 2:
+        # Nothing to do...
         return
 
     # ------------- SIMULATION DATA GENERATION
@@ -376,14 +417,7 @@ def pipeline(configuration):
         logger.log('Resuming pipeline at step ' + str(status) + ' for ' + folder_name)
 
     # ------------- PREPROCESSING
-    if status < 2:
-        step2_preprocessing(output_folder, logger)
-    elif status == 2:
-        logger.log('Resuming pipeline at step ' + str(status) + ' for ' + folder_name)
-
-    # ------------- DNN TRAINING
-    rpm, lvad, artpulse, architectures = configuration
-    step3_train_dnns(output_folder, architectures, logger)
+    step2_preprocessing(output_folder, logger)
 
     # ------------- TERMINATE
     logger.log('End of pipeline for ' + folder_name)
@@ -397,7 +431,7 @@ def step1_0D_generation(output_folder, configuration, logger):
             logger.log(f'Simulation progression: {n}/{N_samples}')
 
     simlogger = Logger(path.join(output_folder, '1-log_data_generation.log'), buffer_size=200)
-    rpm, lvad, artpulse, architectures = configuration
+    rpm, lvad, artpulse = configuration
 
     # --- Trash data (modelica build and exec files)
     trash_folder = gen_trash_folder(root_trash_folder, configuration)
