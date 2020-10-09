@@ -316,6 +316,55 @@ def train_dnn(perccoef, files_path=None, save_test_data=True, verbose=False,
     return (normdata, (Xtest, Ytest), model)
 
 
+def generate_dataset(datasets, selected_aks, perc_coef=None):
+    """Concatenate several datasets into a single one, adding a feature describing pump speed
+    for each dataset.
+
+    The datasets are stored in X.mat and Y.mat files, where X is a tensor of shape
+    N_samples x N_variables x N_coefficients.
+
+    :param dict[int, str] datasets:
+        pump rpm -> root folder of the dataset for the specified rpm (containing X.mat, Y.mat)
+    :return:
+        (X, Y) tensors
+    """
+    X_dataset = []
+    Y_dataset = []
+
+    for rpm, dataset_path in datasets.items():
+        # --- Data loading
+        X = sio.loadmat(os.path.join(dataset_path, 'X.mat'))['X']
+        Y = sio.loadmat(os.path.join(dataset_path, 'Y.mat'))['Y']
+        print(f'{rpm} RPM: loaded X {X.shape} and Y {Y.shape}')
+
+        # --- Input data reduction
+        n_freq = X.shape[2]
+        indices_to_select = reduce(
+            perc=perc_coef,
+            array_length=n_freq,
+            selectedaks=selected_aks
+        )
+        X = np.take(X, indices_to_select, axis=2)
+        print(f'{rpm} RPM: Reduced input, X is now {X.shape}')
+
+        # --- Flatten underlying signals (SAP, PAP)
+        # The current X shape is N_samples x N_variables x N_coefficients
+        # We transform X to a 2D matrix
+        X = X.reshape((X.shape[0], X.shape[1] * X.shape[2]))
+
+        # --- Adding the pump speed as a feature
+        RPM_tensor = np.ones((X.shape[0], 1)) * rpm
+        X = np.concatenate((X, RPM_tensor), axis=1)
+
+        # --- Add processed dataset
+        X_dataset.append(X)
+        Y_dataset.append(Y)
+
+    X_dataset = np.concatenate(X_dataset, axis=0)
+    Y_dataset = np.concatenate(Y_dataset, axis=0)
+    return X_dataset, Y_dataset
+
+
 def manage_args(args):
     parser = argparse.ArgumentParser()
     parser.add_argument('mode', choices=['train', 'test'], help='choose whether to train or test the DNN')

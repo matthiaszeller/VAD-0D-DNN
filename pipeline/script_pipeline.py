@@ -52,13 +52,18 @@ Warning:
 
 from os import path
 import os
+import shutil
 import multiprocessing
 import random
 import json
 import subprocess
 import sys
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 import argparse
+import pickle
+import time
 from datetime import datetime
 import scipy.io as sio
 
@@ -97,6 +102,15 @@ N_processes = multiprocessing.cpu_count()
 configurations = [
     (rpm, True, True)
     for rpm in range(4600, 6100, 100)
+]
+
+# --- DNN architectures (hidden layers, neurons)
+architectures = [
+    (layers, neurons)
+    for layers in [8, 10, 12]
+    for neurons in [16, 32, 64, 128]
+] + [
+    (6, neurons) for neurons in [64, 128, 256]
 ]
 
 # -------------------- SIMULATION SETUP
@@ -182,8 +196,8 @@ def build_0D_parameters_from_config(configuration):
 
 
 def format_dnn_folder_name(architecture):
-    layers, neurons, aks = architecture
-    return f'dnn_{layers}_layers_{neurons}_neurons_{aks}_aks'
+    layers, neurons = architecture
+    return f'dnn_{layers}_layers_{neurons}_neurons'
 
 
 # ------------------------------------------------------- #
@@ -209,7 +223,7 @@ def prompt_initial_validate():
         display(var, globals())
 
     print(' - configurations:')
-    print('\tRPM,   LVAD, AP,   Architectures')
+    print('\tRPM,   LVAD, AP')
     for c in configurations:
         print('\t' + str(c))
 
@@ -227,13 +241,15 @@ def main():
                         help='file name in which to concatenate logs, write in file and exit',
                         type=str, default=None)
     parser.add_argument('-p', '--path',
-                        help='override the root folder, mainly used for debugging',
+                        help='override the root folder',
                         type=str, default=None)
     parser.add_argument('-s', '--status',
                         help='print status of each dataset before running the script',
                         action='store_true')
+    parser.add_argument('--concat', action='store_true',
+                        help='skip step 1 & 2 (concat datasets and train DNNs)')
     parser.add_argument('--train', action='store_true',
-                        help='skip step 1 & 2 and concatenate available datasets')
+                        help='skip step 1, 2, 3 (train DNNs)')
     parser.add_argument('aks', type=int,
                         help='number of aks coeffs to select (control DNN input size)')
     args = parser.parse_args()
@@ -270,7 +286,7 @@ def main():
                         print=True, buffer_size=0)
     mainlogger.log('Initialization...')
 
-    if not args.train:
+    if not args.concat and not args.train:
         if not path.exists(root_trash_folder):
             mainlogger.log('Creating trash folder...')
             os.mkdir(root_trash_folder)
@@ -290,35 +306,52 @@ def main():
         # Remove trash files
         if path.exists(root_trash_folder):
             mainlogger.log('Deleting trash data...')
-            os.rmdir(root_trash_folder)
+            shutil.rmtree(root_trash_folder)
 
     # ------------- Concatenate datasets
     os.chdir(root_output_folder)
-    root_files = os.listdir('.')
-    # Keep folders
-    root_files = filter(lambda fp: os.path.isdir(fp), root_files)
-    # Don't keep trash
-    root_files = filter(lambda fp: 'trash' not in fp, root_files)
-    # Keep only complete datasets
-    root_files = filter(lambda fp: check_pipeline_status(fp, mainlogger) == 2, root_files)
+    if not args.train:
+        root_files = os.listdir('.')
+        # Keep folders
+        root_files = filter(lambda fp: os.path.isdir(fp), root_files)
+        # Don't keep trash
+        root_files = filter(lambda fp: 'trash' not in fp, root_files)
+        # Keep only complete datasets
+        root_files = filter(lambda fp: check_pipeline_status(fp, mainlogger) == 2, root_files)
 
-    root_files = list(root_files)
-    datasets = {parse_folder_name(folder): folder for folder in root_files}
+        root_files = list(root_files)
+        datasets = {parse_folder_name(folder): folder for folder in root_files}
+
+        oldstdout = sys.stdout
+        sys.stdout = mainlogger
+        mainlogger.set_stdout(oldstdout)
+        X, Y = ud.generate_dataset(datasets, args.aks, perc_coef=None)
+        # Save
+        dataset_description = {
+            'RPMs': list(datasets.keys()),
+            'aks': args.aks
+        }
+        sio.savemat('dataset.mat', mdict={
+            'description': dataset_description,
+            'X': X,
+            'Y': Y,
+        })
+        sys.stdout = oldstdout
+        mainlogger.set_stdout(None)
+
+    # ------------- TRAIN DNNS
+    # in this case, the script basically starts here -> load data
+    mainlogger.log('Loading existing data "dataset.mat", description:')
+    data = sio.loadmat('dataset.mat')
+    X, Y = data['X'], data['Y']
+    mainlogger.log(str(data['description']))
+    gen_training_data(X, Y, mainlogger)
 
     oldstdout = sys.stdout
     sys.stdout = mainlogger
     mainlogger.set_stdout(oldstdout)
-    X, Y = ud.generate_dataset(datasets, args.aks, perc_coef=None)
-    # Save
-    dataset_description = {
-        'RPMs': list(datasets.keys()),
-        'aks': args.aks
-    }
-    sio.savemat('dataset.mat', mdict={
-        'description': dataset_description,
-        'X': X,
-        'Y': Y,
-    })
+    ps_pool = multiprocessing.Pool(processes=2)
+    ps_pool.map(train_dnn, architectures)
     sys.stdout = oldstdout
     mainlogger.set_stdout(None)
 
@@ -477,70 +510,111 @@ def step2_preprocessing(output_folder, logger):
     logger.log('Pre-processing has ended')
 
 
-def step3_train_dnns(output_folder, architectures, logger):
-    def check_folder_contents(folder, file_list):
-        """Returns True if all files in `file_list` are in `folder`, False otherwise."""
-        list_dir = os.listdir(folder)
-        exists_ls = [file in list_dir for file in file_list]
-        return all(exists_ls)
+def gen_training_data(X, Y, logger):
+    """
+    :param numpy.ndarray X:
+    :param numpy.ndarray Y:
+    :return:
+    """
+    os.chdir(root_output_folder)
+    if not os.path.exists('dnns'):
+        logger.log('Creating folder dnns/')
+        os.mkdir('dnns')
+    os.chdir('dnns')
 
-    logger.log('Launching DNN training for configuration ' + path.basename(output_folder))
-    n = len(architectures)
+    if path.exists('normdata.mat'):
+        logger.log('Normalized data already exsits, skipping...')
+        return
+    else:
+        logger.log('Generating normalized data...')
+        # --- Data shuffling
+        logger.log('Shuffling data...')
+        indices = np.random.permutation(X.shape[0])
+        X = X[indices]
+        Y = Y[indices]
 
-    for i, (hlayers, neurons, aks) in enumerate(architectures):
-        # --- Setup paths
-        folder_name = format_dnn_folder_name((hlayers, neurons, aks))
-        dnn_data_folder = path.join(output_folder, folder_name)
+        # --- Data splitting
+        logger.log('Splitting data into train and test sets...')
+        idx = int(0.95 * X.shape[0])
+        Xtrain, Xtest = X[:idx], X[idx:]
+        Ytrain, Ytest = Y[:idx], Y[idx:]
 
-        # --- Check if DNN data already exists
-        if path.exists(dnn_data_folder):
-            ls = os.listdir(dnn_data_folder)
-            if len(ls) > 0:
-                if check_folder_contents(dnn_data_folder, dnn_folder_contents):
-                    logger.log(f'Architecture {folder_name} already exists, skipping...')
-                else:
-                    logger.log(f'<WARNING> Problem encountered in {folder_name} '
-                               f'- some files are missing. Please check by hand. Skipping...')
-                continue
-            # else: len(ls) == 0, the folder exists and is empty,
-            # we don't want to abort this step
-        else:
-            os.mkdir(dnn_data_folder)
+        # --- Data normalization
+        logger.log('Normalizing data...')
+        Xmins = Xtrain.min(axis=0)
+        Xmaxs = Xtrain.max(axis=0)
+        Xtrain = (Xtrain - Xmins) / (Xmaxs - Xmins)
+        Xtest =  (Xtest -  Xmins) / (Xmaxs - Xmins)
 
-        # --- Setup
-        logger.log(f'Training architecture {i+1}/{n} - {folder_name}')
-        os.chdir(dnn_data_folder)
+        Ymins, Ymaxs = Y.min(0), Y.max(0)
+        Ytrain = (Ytrain - Ymins) / (Ymaxs - Ymins)
+        Ytest  = (Ytest  - Ymins) / (Ymaxs - Ymins)
 
-        # Redirect stdout to a log file for the training/testing procedure
-        dnnlogger = Logger(path.join(dnn_data_folder, 'log_dnn.log'))
-        old_stdout = sys.stdout
-        sys.stdout = dnnlogger
+        data = {
+            'Xmins': Xmins,
+            'Xmaxs': Xmaxs,
+            'Ymins': Ymins,
+            'Ymaxs': Ymaxs,
+            'Xtrain': Xtrain,
+            'Xtest': Xtest,
+            'Ytrain': Ytrain,
+            'Ytest': Ytest
+        }
 
-        # --- DNN training & testing
-        (normdata, (Xtest, Ytest), model) = ud.train_dnn(
-            perccoef=0,
-            selected_aks=aks,
-            n_hlayers=hlayers,
-            n_neurons=neurons,
-            files_path='../'
-        )
+        # --- Save data
+        logger.log('Saving normalized data...')
+        sio.savemat('normdata.mat', mdict=data)
 
-        ud.test_dnn(
-            model=model,
-            Xtest=Xtest,
-            Ytest=Ytest,
-            normdata=normdata,
-            param_lst=list_parameters,
-            runsim=False,
-            dnn_folder='.',
-            output_dnn_test=None,
-            modelica_file_path=None,
-        )
 
-        dnnlogger.flush()
-        sys.stdout = old_stdout
+def train_dnn(architecture):
+    # Pay attention: 1D arrays stored in .mat files are recovered as 2D array with axis 0 of size 1
 
-    logger.log('DNN training completed...')
+    fname = format_dnn_folder_name(architecture)
+    if path.exists(fname):
+        print(f'Skipping {fname}')
+        return
+    else:
+        os.mkdir(fname)
+
+    data = sio.loadmat('normdata.mat')
+
+    data['Xtrain'] = data['Xtrain']
+    data['Ytrain'] = data['Ytrain']
+
+    layers, neurons = architecture
+    model = ud.build_keras_model(
+        input_shape=(data['Xtrain'].shape[1],),
+        noutparams=data['Ytrain'].shape[1],
+        n_hlayers=layers, n_neurons=neurons
+    )
+
+    start = time.time()
+    print(f'Fitting {fname}')
+    history = model.fit(data['Xtrain'], data['Ytrain'],
+                        epochs=1000, validation_split=0.2, verbose=0)
+    print(f'{fname} trained in {time.time() - start:.4} s')
+
+    model.save(path.join(fname, 'model.h5'))
+    with open(path.join(fname, 'history.bin'), 'wb') as f:
+        pickle.dump(history.history, f)
+
+    plt.plot(history.history['loss'], label='loss')
+    plt.plot(history.history['val_loss'], label='val_loss')
+    plt.legend()
+    plt.savefig(path.join(fname, 'losses.eps'), transparent=False)
+
+    # --- Test
+    Ytesthat = model.predict(data['Xtest'])
+    Ytest = data['Ytest']
+    # Un-normalize
+    Ytest = Ytest * (data['Ymaxs'] - data['Ymins']) + data['Ymins']
+    Ytesthat = Ytesthat * (data['Ymaxs'] - data['Ymins']) + data['Ymins']
+    np.savetxt(path.join(fname, 'Ytest.txt'), Ytest)
+    np.savetxt(path.join(fname, 'Ytestpred.txt'), Ytesthat)
+
+    # Simply for compatibility
+    normdata = {'parammins': data['Ymins'][0], 'parammaxs': data['Ymaxs'][0]}
+    ud.create_and_save_performance_fig(Ytest, Ytesthat, normdata, fname)
 
 
 # ------------------------------------------------------- #
