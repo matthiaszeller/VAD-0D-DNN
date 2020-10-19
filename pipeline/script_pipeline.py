@@ -38,6 +38,8 @@ Warning:
     * You must edit `setup_preprocessing.py` according to settings you chose
       in this script (time discretization according to values in `om_build_settings`)
     * It's currently only possible to provide pump speed to the DNN (i.e. DNN is unaware of artificial pulse)
+
+Once you identified a suitable DNN architecture, you can run script_test_dnn.py.
 """
 
 # TODO: a huge bottleneck seems to be pre-processing when using an HDD:
