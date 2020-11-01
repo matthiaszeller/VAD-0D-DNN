@@ -13,6 +13,13 @@ FilePathParameters='/Users/jean.bonnemain/Documents/Code/0d_model/Deep_learning/
 filesExact = dir([FilePathOutputs,'*exact.mat']);
 filesPredicted = dir([FilePathOutputs,'*predicted.mat']);
 
+filesExact = sort_nat({filesExact.name});
+filesPredicted = sort_nat({filesPredicted.name});
+
+% For sensitivity analysis:
+%filesExact = dir([FilePathOutputs,'*.mat']);
+%filesPredicted = dir([FilePathOutputs,'*.mat']);
+
 
 % =========== FIND SIMULATION TIME & TIME STEP
 % Load first file to identify the time step and duration of the simulation

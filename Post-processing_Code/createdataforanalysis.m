@@ -9,12 +9,13 @@ function [X] = createdataforanalysis(files,path,tsub_min, tsub_max)
 %LVEDV: Left Ventricular End Diastolic Volume
 %LVESV: Left Ventricular End Systolic Volume
 %CI: Cardiac Index
+%WARNING ! You must profile a list of files sorted in natural order, i.e.
+%first preprocess files = sort_nat({dir(...).name}).
 
-%   Detailed explanation goes here
 count=1;
 
-for file = files'
-    results = load([path,file.name]);
+for i = 1:size(files, 2)
+    results = load([path,files{i}]);
     
     [SAP,t]=extractresults('SystemicArteries.PC',results);
     [SAPsubrange,tsubrange]=timerange(SAP,t,tsub_min,tsub_max);
@@ -64,7 +65,7 @@ for file = files'
 %     [RVPsubrange,tsubrange]=timerange(RVP,t,tsub_min,tsub_max);
     
     X(count,:)=[HR,SAPM,SAPS,SAPD,PAPM,PAPS,PAPD,LVEF, LVEDV, LVESV, CI, PCPW];
-    disp(count);
+    disp([num2str(count), ' - ', files{i}]);
     count = count + 1;
 end
 end
