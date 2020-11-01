@@ -1,86 +1,64 @@
 # VAD-0D-DNN
 
-**DISCLAIMER**: the `findpeaks` function of Octave does not work as expected. 
-Please use Matlab. 
+**TODO: description**
 
-## About
+# Getting started
 
-Semester project with Jean Bonnemain and Simone Deparis. 
-All the code was provided by [Jean Bonnemain](https://bitbucket.org/%7Bbf4fa678-951a-491f-a0d2-7efb1e5d3c9c%7D/). 
-The project aims to simulate the cardiovascular system - optionally with a left ventricular assist device (LVAD) - 
-and train a deep neural network to estimate parameters reflecting heart disfunctions.
-My contribution is to reimplement the code for a new cardiac device, and train a deep neural network 
-to estimate parameter values that reflect left ventricular recovery. 
+## Prerequisites
 
-## Overview 
 
-1. Implementation of the 0D model for the cardiovascular system, with LVAD. Performed with Modelica. 
-1. Dataset generation by the 0D model 
-1. Preprocessing
-1. Neural network training and testing
-1. Postprocessing
 
-## Brief changelog
+# Project Overview
 
-1. **HQ curve**: Update the modelica code for Heart Mate III since it is currently implemented for Heart Mate II.
-	
-    * Fit quadratic polynomials to the HQ curves in the HMIII manual
-    * Duplicate the `VAD` model to `VAD2` and modify the expression of `Q` as a function of `dP`
-    * Duplicate the main model that instanciates the `VAD` model and instanciate `VAD2` instead
-    * Check the consistency of curves for medium heart failure (MHF) / severe heart failure (SHF) 
-        and in context of baroreceptor regulation / no regulation. 
-        Absence of regulation is simulated by setting the following parameters to zero: 
-        `Param_LeftVentricle_Emax0`, `Param_LeftVentricle_EmaxRef0`, 
-        `Param_LeftVentricle_AGain_Emax`, `Param_LeftVentricle_kE`
+The project is subdivided in the following sections:
 
-2. **Simulation data generation**: Use the model with `VAD2` to generate the simulation data. 
+* 0D Model Implementation: `modelica`, 0D Model of the cardiovascular system implemented in the OpenModelica language
 
-    * [Simulation_script/utils_openmodelica.py](Simulation_script/utils_openmodelica.py):
-    change the data generation procedure, new `runSimulation` function replacing
-    `launchSimulation`. Idea: we first build the modelica file to create an executable,
-    then we run the executable with `-override`. This significantly improves speed of data generation.
-    * [Simulation_script/setup.py](Simulation_script/setup.py): put all parameters here, 
-    as the number of samples, the paths, ...
-    * Folder/files generated at end of simulation (the only difference is that the content of `models/` is 
-    replaced by `parameters.txt`): 
-        * `output_folder` is created
-        * `output_folder/outputs` is created
-        * Output files: As many as `numberofsamples` .mat files are generated in `output_folder/outputs/`
-        * Input file: a single `output_folder/parameters.txt` file in .csv format
+* 0D Model Simulation: `Simulation_script`, Python code gluing with the model implemented with OpenModelica language 
+    * Generate a dataset by solving the model with different parameter values
+    * Perform a sensitivity analysis: fix 3 heart-failure parameters and vary the 4th one
+    * Case study: simulate different scenarios by varying heart failure severity, pump speed
 
-3. **Preprocessing**: create a dataset (`.mat` files) for the neural network. The inputs are the 
-   PAS and PAP curves (Fourier coefficients) and the outputs are the parameters
-   reflecting cardiac dysfunction.
-    * New [Pre-processing/setup.m](Pre-processing/setup.m) file regrouping some parameters
-    (`tsub_min`, `tsub_max`, `dt`, paths...)
-    * Adaptation of [Pre-processing/test_createdataset.m](Pre-processing/test_createdataset.m):
-        * Convert output data from .csv to .mat format (`parameters.txt` -> `Y.mat`)
-    * New functions:
-        * [Pre-processing/contains.m](Pre-processing/contains.m): this function is 
-        *useless in Matlab* but guarantees compatibility with Octave
-        * [Pre-processing/sort_nat.m](Pre-processing/sort_nat.m):
-        to sort an Matlab array of files in the natural order. For instance, tansform 
-        `{'f1.txt'  'f10.txt'  'f2.txt'}` to `{'f1.txt'  'f2.txt'  'f10.txt'}`
+* Preprocessing: `Pre-processing`, Python and Matlab code 
+    * Extract systemic arterial pressure and pulmonary arterial pressure from simulation data
+    * Compute Fourier coefficients
+    * Generate DNN input and output files
 
-4. **Deep learning**: load the `.mat` files, train and test the neural network.
-    * [Deep_learning/test_driver.py](Deep_learning/test_driver.py): accepts arguments (`help`, `train`, `test`), 
-    main file content moved in [Deep_learning/utils_deeplearning.py](Deep_learning/utils_deeplearning.py).
-    * [Deep_learning/utils_deeplearning.py](Deep_learning/utils_deeplearning.py): new functions:
-        * `train_dnn`: all the code related to the DNN training was moved here
-        * `test_dnn`: all the code related to the DNN testing was moved here
-        * `manage_args` to process arguments of [Deep_learning/test_driver.py](Deep_learning/test_driver.py)
-    * [Simulation_script/utils_openmodelica.py](Simulation_script/utils_openmodelica.py): 
-      new function `runTestSimulation` to generate the DNN test data
+* DNN Training and Testing: `Deep_learning`, Python (Keras Library)
+    * DNN selection: train different DNN architectures with different input sizes to select the best DNN
+    * Splits dataset into training / test set 
+    
+* Post-processing: `Post-processing_Code`, Matlab
+    * Compute hemodynamic quantities on the test set
 
-## Workflow
+* Notebooks: `notebooks`, Jupyter Notebooks (Python)
+    * Data analysis and visualization
+    * Generate figures and tables for the article
+    * Results aggregation
+    * Almost each step of the pipeline has one or more dedicated notebook
+    
+* Project pipelining: `pipelining` Python code gluing data generation, preprocessing, DNN training
+    * Automatic way to generate datasets with different pump configurations, merge them, train DNNs
+
+
+Note that the contents of `pipelining` was used to generate data for the article.
+
+
+# Workflow
+
+The contents of `Simulation_script` can generate a dataset under a single pump configuration, according to the 
+content of the `Mathcard.mo` file. We first each step of the project pipeline and how to manually run it. 
+We then describe the automatic method, which wraps all the manual steps (up to DNN training) in a single Python script.
+
+## Manual pipeline
+
+![dataflow](res/diagram/data_flow.bmp)
 
 Note: some output folder paths have to be configured (e.g. `output_path`),
 however, the folder created on the disk might contain the current date at the end.
 Those output paths will be used in downstream procedures: be aware that when the 
 description refers to the output folder, it implicitly refers to the 
 output folder *with* the date as a suffix (e.g. we refer to `output_path` instead of `output_path_MM_dd_YYYY`).
-
-Note: find the diagram below to visualize the data flow
 
 1. Setup simulation by modifying [Simulation_script/setup.py](Simulation_script/setup.py).
     * Make sure that the `output_folder` is in a disk containing enough space (very minimum: 10GB for N=10'000).
@@ -236,7 +214,8 @@ in (c) at last.
 To overcome this issue, at step 13, do not forget to re-modify `Mathcard.mo` with the RPM level that corresponds
 to the current data set for which you are generating the DNN test dataset.
 
-## Data flow
+## Automatic pipeline
 
-![dataflow](res/diagram/data_flow.bmp)
+See documentation in `pipeline/script_pipeline.py`. 
+
 
