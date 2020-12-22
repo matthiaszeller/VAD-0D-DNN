@@ -9,7 +9,7 @@ function [X] = createdataforanalysis(files,path,tsub_min, tsub_max)
 %LVEDV: Left Ventricular End Diastolic Volume
 %LVESV: Left Ventricular End Systolic Volume
 %CI: Cardiac Index
-%WARNING ! You must profile a list of files sorted in natural order, i.e.
+%WARNING ! You must provide a list of files sorted in natural order, i.e.
 %first preprocess files = sort_nat({dir(...).name}).
 
 count=1;
@@ -40,6 +40,11 @@ for i = 1:size(files, 2)
     LVEDV=max(LVVsubrange);
     LVESV=min(LVVsubrange);
     
+    [LVP, t] = extractresults('LeftVentricle.Inlet.P', results);
+    [LVPsubrange, tsubrange] = timerange(LVP, t, tsub_min, tsub_max);
+    LVESP = max(LVPsubrange);
+    LVEDP = min(LVPsubrange);
+    
     [AoQ,t]=extractresults('AorticValve.Q',results);
     [AoQsubrange,tsubrange]=timerange(AoQ,t,tsub_min,tsub_max);
 
@@ -64,7 +69,7 @@ for i = 1:size(files, 2)
 %     [RVP,t]=extractresults('RightVentricle.PV',results);
 %     [RVPsubrange,tsubrange]=timerange(RVP,t,tsub_min,tsub_max);
     
-    X(count,:)=[HR,SAPM,SAPS,SAPD,PAPM,PAPS,PAPD,LVEF, LVEDV, LVESV, CI, PCPW];
+    X(count,:)=[HR,SAPM,SAPS,SAPD,PAPM,PAPS,PAPD,LVEF, LVEDV, LVESV, LVESP, LVEDP, CI, PCPW];
     disp([num2str(count), ' - ', files{i}]);
     count = count + 1;
 end
