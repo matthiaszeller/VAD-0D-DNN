@@ -35,7 +35,7 @@ for file = files
         [signal,t]=extractresults(inputvariablesname{i},results);
         [signal,t]=timerange(signal,t,tsub_min,tsub_max);
         [y,aks,bks,T,t,signal] = performfftonsignal(signal,t,dt);
-        % some coefficients in bks are always zero            
+        % some coefficients in bks are always zero    
         bks = bks(abs(bks) > 1e-15);
         if (count == 1 && i == 1)
             n = length(aks) + length(bks);
@@ -61,7 +61,7 @@ disp('Extracting responses...')
 % csvread(path, R, C)
 % R=1 -> skip row 0 (the header / column names)
 Y = csvread(pathparams, 1, 0);
-% Slide the matrix to remove column n
+% Slice the matrix to remove column n
 Y = Y(:, 2:end);
 save('Y.mat', 'Y')
 

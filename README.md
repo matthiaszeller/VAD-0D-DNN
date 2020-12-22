@@ -4,6 +4,13 @@
 
 # Getting started
 
+## Requirements
+
+
+* Matlab R2020a
+* Openmodelica 1.16.0
+* Python 3
+
 ## Prerequisites
 
 

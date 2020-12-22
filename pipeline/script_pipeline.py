@@ -112,7 +112,9 @@ architectures = [
     for layers in [8, 10, 12]
     for neurons in [16, 32, 64, 128]
 ] + [
-    (6, neurons) for neurons in [64, 128, 256]
+    (layers, neurons)
+    for neurons in [32, 64, 128, 256]
+    for layers in [3, 4, 5, 6]
 ]
 
 # -------------------- SIMULATION SETUP
