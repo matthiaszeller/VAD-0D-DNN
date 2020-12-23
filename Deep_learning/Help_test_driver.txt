@@ -1,3 +1,0 @@
-Number of frequencies
-n=(M+1)+(M+1)-1=2m+1    (aks+bks) n pair (ligne 35,36)
-n=(M+2)+(M+2)-2=2M+2.   (aks+bks) n impair (ligne 45,46)
