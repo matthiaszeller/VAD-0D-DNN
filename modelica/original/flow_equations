@@ -1,7 +1,0 @@
-  Q = if RPM == 3000 then -0.12205 * dP ^ 2 + 3.0093 * dP + 29.886
-    else if RPM == 4000 then -0.048803 * dP ^ 2 + 1.8484 * dP + 57.770
-    else if RPM == 5000 then -0.024594 * dP ^ 2 + 1.29678 * dP + 84.081
-    else if RPM == 6000 then -0.012153 * dP ^ 2 + 0.81934 * dP + 107.02
-    else if RPM == 7000 then -0.013720 * dP ^ 2 + 2.1611 * dP + 51.474
-    else if RPM == 8000 then -0.0055313 * dP ^ 2 + 0.70504 * dP + 143.71
-    else /* if RPM == 9000 then */ -0.0042916 * dP ^ 2 + 0.80525 * dP + 141.18;
