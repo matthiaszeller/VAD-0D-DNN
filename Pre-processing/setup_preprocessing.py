@@ -8,6 +8,9 @@ tsub_min = 20
 tsub_max = 30
 dt = 0.015
 
+
+# ------ If you use script_createdataset.py (ignore if you use `script_pipeline.py`)
+
 # Paths: use None if you run the script from the folder containing outputs/ and parameters.txt
 path_mats = None
 #path_mats = "/media/maousi/Data/tmp/simulation_noLVAD_2020_04_15/outputs"
