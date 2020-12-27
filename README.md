@@ -27,23 +27,16 @@ Modelica language.
     * Perform a sensitivity analysis: fix 3 heart-failure parameters and vary the 4th one
     * Case study: simulate a few scenarios by varying heart failure severity, pump speed
 
-* Preprocessing in `Pre-processing`
+* Preprocessing in `Pre-processing`: Python code
     * Extract systemic arterial pressure and pulmonary arterial pressure from simulation data
     * Compute Fourier coefficients
     * Generate DNN input and output files
 
-* DNN Training and Testing in `Deep_learning`: Python and (Keras Library)
-    * DNN selection: train different DNN architectures with different input sizes to select the best DNN
-    * Splits dataset into training / test set 
+* DNN Training and Testing in `Deep_learning`: Python code
+    * Build and format dataset for the DNN
     
-* Post-processing: `Post-processing_Code`, Matlab
+* Post-processing: `Post-processing`, Matlab code
     * Compute hemodynamic quantities on the test set
-
-* Notebooks: `notebooks`, Jupyter Notebooks (Python)
-    * Data analysis and visualization
-    * Generate figures and tables for the article
-    * Results aggregation
-    * Almost each step of the pipeline has one or more dedicated notebook
     
 * Project pipelining: `pipelining` Python code gluing data generation, preprocessing, DNN training
     * `script_pipeline.py`: Automatic way to generate datasets with different pump configurations, merge them, train different DNNs on the 
@@ -56,7 +49,7 @@ Modelica language.
 ## Reproductibility
 
 The procedure described below was tested on Ubuntu 20.04. The settings as set in `script_pipeline.py` generated about 
-2.1 TB of data. 
+2.1 TB of data and the whole procedure took about 20h to complete. 
 
 ### Overview
 
@@ -106,7 +99,8 @@ coefficients to retain, the DNN architectures (and many other parameters) in `pi
    
 1. Once you identified a DNN architecture that performs well, 
 run `pipeline/script_test_dnn.py` to generate simulations on test data
+   * Say you 
 
 1. Compute hemodynamic quantities on test data:
-    1. Setup paths in `Post-processing_Code/setupproj.m` to target the `outputs/` folder of the selected DNN architecture
+    1. Setup paths in `Post-processing/setupproj.m` to target the `outputs/` folder of the selected DNN architecture
     1. Run `test_dnnmodelevaluation.m`
