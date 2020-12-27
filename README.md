@@ -99,7 +99,6 @@ coefficients to retain, the DNN architectures (and many other parameters) in `pi
    
 1. Once you identified a DNN architecture that performs well, 
 run `pipeline/script_test_dnn.py` to generate simulations on test data
-   * Say you 
 
 1. Compute hemodynamic quantities on test data:
     1. Setup paths in `Post-processing/setupproj.m` to target the `outputs/` folder of the selected DNN architecture
