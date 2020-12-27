@@ -100,7 +100,7 @@ N_processes = multiprocessing.cpu_count()
 # DNN architectures: list of tuples (hidden_layers, neurons, aks)
 configurations = [
     (rpm, True, True)
-    for rpm in range(4600, 6100, 100)
+    for rpm in range(4000, 6100, 100)
 ]
 
 # --- DNN architectures (hidden layers, neurons)
