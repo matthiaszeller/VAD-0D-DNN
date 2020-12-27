@@ -8,7 +8,6 @@ When running the script, you are first prompted to continue.
 Advice:
     - to do some tests, set `N_samples` to a very low value (but this might trigger error for DNN training)
     - read the configuration displayed when you run the script
-    - use `script_stats_dnn.py` to find the best architectures before running this script
     - you can use `script_check_sim_data.py` to check consistency of simulation data
 
 General script notions:
@@ -18,25 +17,15 @@ General script notions:
     - The word "pipeline" used in this script refers to generating data for a single dataset
     - This script runs `N_processes` processes in parallel and assigns 1 pipeline to each process
     - You can run the script several times with the same `root_output_folder`,
-      but don't change `N_samples` in that case
+      but don't change `N_samples` or number of Fourier coefficients in that case
     - If you run this script in a folder with existing data, it tries to resume the pipeline
       and outputs an error if the pipeline cannot be resumed
     - Do NOT rename/move folders nor any file created by the script
 
-Example of usage:
-    1. set `configurations` with only 1 DNN architecture (you can train other DNNs later),
-       and at most `N_processes` configurations
-    2. change other script variables according to what you need (in `SETUP` section)
-    3. run this script
-    4. repeat from 1. and set the other configurations you want (don't change N_samples and provide same number of
-       coefficients)
-    5. once all simulation data is computed, you can now train additional DNN configurations,
-       set the `configurations` variable accordingly
-    5. re-run the script - it trains the additional DNNs (0D data is not computed again)
-
 Warning:
     * You must edit `setup_preprocessing.py` according to settings you chose
       in this script (time discretization according to values in `om_build_settings`)
+    * The script might take several hours (or days) to terminate
 
 Once you identified a suitable DNN architecture, you can run script_test_dnn.py.
 """

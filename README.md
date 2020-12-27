@@ -56,7 +56,7 @@ Modelica language.
 ## Reproductibility
 
 The procedure described below was tested on Ubuntu 20.04. The settings as set in `script_pipeline.py` generated about 
-2.5 TB of data. 
+2.1 TB of data. 
 
 ### Overview
 
@@ -70,7 +70,7 @@ coefficients to retain, the DNN architectures (and many other parameters) in `pi
     1. Merges data of all configurations in a single `.mat` file and creates training and test sets
     1. Trains the specified DNNs
     
-    Note 1: this script takes several hours to run
+    Note 1: this script might take several hours (or even days) to run
     
     Note 2: the output folder will have the following contents:
     ```
