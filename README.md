@@ -75,7 +75,7 @@ coefficients to retain, the DNN architectures (and many other parameters) in `pi
     Note 2: the output folder will have the following contents:
     ```
     .
-    ├── 4600_LVAD_AP
+    ├── 4000_LVAD_AP
     │   ├── outputs
     │   │   ├── Ursino1998Model_VAD2_output_0.mat
     │   │   ├── Ursino1998Model_VAD2_output_1.mat
@@ -84,9 +84,9 @@ coefficients to retain, the DNN architectures (and many other parameters) in `pi
     │   ├── X.mat
     │   ├── Y.mat
     │   └── ...
-    ├── 4700_LVAD_AP
-    │   ├── ...
     ├── ...
+    ├── 6000_LVAD_AP
+    │   ├── ...
     ├── dataset.mat
     ├── dnns
     │   ├── dnn_10_layers_128_neurons
