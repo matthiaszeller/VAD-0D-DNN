@@ -62,16 +62,51 @@ The procedure described below was tested on Ubuntu 20.04. The settings as set in
 
 1. Set the range of LVAD rotational speeds, the simulation settings (e.g. sampling), the number of Fourier 
 coefficients to retain, the DNN architectures (and many other parameters) in `pipeline/script_pipeline.py`
+
 1. Set sampling settings in `Pre-processing/setup_preprocessing.py`
+
 1. Run the script `pipeline/script_pipeline.py`, which
     1. Generates simulation data for each specified pump configuration
     1. Merges data of all configurations in a single `.mat` file and creates training and test sets
     1. Trains the specified DNNs
     
-    Note: this script takes several hours to run
+    Note 1: this script takes several hours to run
+    
+    Note 2: the output folder will have the following contents:
+    ```
+    .
+    ├── 4600_LVAD_AP
+    │   ├── outputs
+    │   │   ├── Ursino1998Model_VAD2_output_0.mat
+    │   │   ├── Ursino1998Model_VAD2_output_1.mat
+    │   │   ├── ...
+    │   ├── parameters.txt
+    │   ├── X.mat
+    │   ├── Y.mat
+    │   └── ...
+    ├── 4700_LVAD_AP
+    │   ├── ...
+    ├── ...
+    ├── dataset.mat
+    ├── dnns
+    │   ├── dnn_10_layers_128_neurons
+    │   │   ├── DNN_Performance.eps
+    │   │   ├── history.bin
+    │   │   ├── losses.eps
+    │   │   ├── model.h5
+    │   │   ├── Ytestpred.txt
+    │   │   └── Ytest.txt
+    │   ├── dnn_10_layers_16_neurons
+    │   │   ├── ...
+    │   ├── ...
+    │   └── normdata.mat
+    ├── logs.log
+    └── mainlog.log
+    ```
+   
 1. Once you identified a DNN architecture that performs well, 
 run `pipeline/script_test_dnn.py` to generate simulations on test data
+
 1. Compute hemodynamic quantities on test data:
     1. Setup paths in `Post-processing_Code/setupproj.m` to target the `outputs/` folder of the selected DNN architecture
     1. Run `test_dnnmodelevaluation.m`
-
