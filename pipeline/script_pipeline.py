@@ -6,7 +6,7 @@
 
 When running the script, you are first prompted to continue.
 Advice:
-    - to do some tests, set `N_samples` to a very low value (but this will trigger error for DNN training)
+    - to do some tests, set `N_samples` to a very low value (but this might trigger error for DNN training)
     - read the configuration displayed when you run the script
     - use `script_stats_dnn.py` to find the best architectures before running this script
     - you can use `script_check_sim_data.py` to check consistency of simulation data
@@ -16,7 +16,7 @@ General script notions:
     - A dataset is characterized by its global simulation settings: pump speed (RPM),
       whether the LVAD is used, and whether artificial pulse (AP) is activated
     - The word "pipeline" used in this script refers to generating data for a single dataset
-    - This script runs `N_processes` and assigns 1 pipeline to each process
+    - This script runs `N_processes` processes in parallel and assigns 1 pipeline to each process
     - You can run the script several times with the same `root_output_folder`,
       but don't change `N_samples` in that case
     - If you run this script in a folder with existing data, it tries to resume the pipeline
@@ -28,7 +28,8 @@ Example of usage:
        and at most `N_processes` configurations
     2. change other script variables according to what you need (in `SETUP` section)
     3. run this script
-    4. repeat from 1. and set the other configurations you want (don't change N_samples)
+    4. repeat from 1. and set the other configurations you want (don't change N_samples and provide same number of
+       coefficients)
     5. once all simulation data is computed, you can now train additional DNN configurations,
        set the `configurations` variable accordingly
     5. re-run the script - it trains the additional DNNs (0D data is not computed again)
@@ -42,9 +43,7 @@ Once you identified a suitable DNN architecture, you can run script_test_dnn.py.
 
 # TODO: a huge bottleneck seems to be pre-processing when using an HDD:
 #       very (!) inefficient if all processes read the N_samples at same time
-#       how to fix?
-#           - lock resources on a single process when it is at the stage of pre-processing
-#             maybe improve since the N_samples are probably close to each other in the disk
+
 
 # ======================================================= #
 # ----------------------- IMPORTS ----------------------- #
