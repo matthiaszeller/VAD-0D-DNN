@@ -3,7 +3,6 @@
     - simulation data generation
     - data pre-processing
     - DNN training
-    - DNN testing - TODO: implement test data generation
 
 When running the script, you are first prompted to continue.
 Advice:
@@ -13,7 +12,7 @@ Advice:
     - you can use `script_check_sim_data.py` to check consistency of simulation data
 
 General script notions:
-    - A dataset is made of `N_samples` simulation files, preprocessing files and DNN data
+    - A dataset is made of `N_samples` simulation files
     - A dataset is characterized by its global simulation settings: pump speed (RPM),
       whether the LVAD is used, and whether artificial pulse (AP) is activated
     - The word "pipeline" used in this script refers to generating data for a single dataset
@@ -37,7 +36,6 @@ Example of usage:
 Warning:
     * You must edit `setup_preprocessing.py` according to settings you chose
       in this script (time discretization according to values in `om_build_settings`)
-    * It's currently only possible to provide pump speed to the DNN (i.e. DNN is unaware of artificial pulse)
 
 Once you identified a suitable DNN architecture, you can run script_test_dnn.py.
 """
