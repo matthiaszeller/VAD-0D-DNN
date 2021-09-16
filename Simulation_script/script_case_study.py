@@ -5,7 +5,7 @@ from os import system
 
 # ========================= INITIALIZATION
 
-output_folder = '/media/maousi/Data/tmp/case_study'
+output_folder = '/media/maousi/Data/tmp/case_study_pvloop'
 
 omc = OMCSessionZMQ()
 
@@ -19,7 +19,7 @@ def runcmd(cmd, output=True):
 
 runcmd('getVersion()')
 
-model_path = "/media/maousi/Data/Documents/Programmation/git/vad-0d-dnn/modelica/original/Mathcard.mo"
+model_path = "/media/maousi/Data/Documents/Programmation/git/VAD-0D-DNN/modelica/original/Mathcard.mo"
 model_name = "Mathcard.Applications.Ursino1998.HMIII.Ursino1998Model_VAD2"
 
 # Load models
@@ -32,15 +32,17 @@ runcmd(f'simulate({model_name}, stopTime=30.0, numberOfIntervals=2000,'
 
 # ========================= DEFINE SIMULATION PARAMETERS
 
+
 param_artificial_pulse = {
-    True: 'LVAD.HMIII_Pulse_Amplitude=2000',
+    #True: 'LVAD.HMIII_Pulse_Amplitude=2000',
     False: 'LVAD.HMIII_Pulse_Amplitude=0'
 }
 
 param_rpm = {
-    4000: 'Param_LVAD_RPM=4000',
-    5000: 'Param_LVAD_RPM=5000',
-    6000: 'Param_LVAD_RPM=6000'
+    #4000: 'Param_LVAD_RPM=4000',
+    #5000: 'Param_LVAD_RPM=5000',
+    #6000: 'Param_LVAD_RPM=6000'
+    0: 'Param_LVAD_RPM=0'
 }
 
 param_heart_failure_header = ['Param_LeftVentricle_Emax0', 'Param_LeftVentricle_EmaxRef0',
