@@ -2,8 +2,7 @@
 
 ## About
 
-This repository contains the code for the paper *Deep neural network to accurately predict left ventricular systolic 
-function under mechanical assistance*, Bonnemain *et al.*
+This repository contains the code for the paper [*Deep Neural Network to Accurately Predict Left Ventricular Systolic Function Under Mechanical Assistance*](https://www.frontiersin.org/article/10.3389/fcvm.2021.752088), Jean Bonnemain, Matthias Zeller, Luca Pegolotti, Simone Deparis, Lucas Liaudet.
 
 ## Requirements
 
